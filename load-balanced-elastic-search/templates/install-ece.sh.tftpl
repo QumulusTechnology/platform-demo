@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+set -e
+
+###############################################################################
+# Debug Options
+###############################################################################
+# Short form: set -u
+# set -o nounset
+# Short form: set -e
+# set -o errexit
+
+# Print a helpful message if a pipeline with non-zero exit code causes the
+# script to exit as described above.
+# trap 'echo "Aborting due to errexit on line $LINENO. Exit code: $?" >&2' ERR
+
+# Allow the above trap be inherited by all functions in the script.
+#
+# Short form: set -E
+# set -o errtrace
+
+# Return value of a pipeline is the value of the last (rightmost) command to
+# exit with a non-zero status, or zero if all commands in the pipeline exit
+# successfully.
+# set -o pipefail
+
+###############################################################################
+# Program Variables
+###############################################################################
+
+# Set $IFS to only newline and tab.
+# http://www.dwheeler.com/essays/filenames-in-shell.html
+IFS=$'\n\t'
+
+###############################################################################
+# Program Functions
+###############################################################################
+
+_install_packages() {
+  sudo apt update
+  sudo DEBIAN_FRONTEND=noninteractiv apt upgrade -yq
+  sudo DEBIAN_FRONTEND=noninteractiv apt install -yq jq ansible python3-openstackclient python3-barbicanclient python3-octaviaclient python3-pip pbzip2
+  sudo python3 -m pip install --user --upgrade pip
+  python3 -m pip install esrally
+}
+
+_install_ansible_roles() {
+  ansible-galaxy install git+https://github.com/elastic/ansible-elastic-cloud-enterprise.git
+  ansible-galaxy install git+https://github.com/geerlingguy/ansible-role-certbot.git,5.1.1
+  ansible-galaxy collection install community.crypto
+  ansible-galaxy collection install openstack.cloud
+}
+
+_timestamp() {
+  date "+%Y-%m-%d %H:%M:%S"
+}
+
+_main() {
+    LOGFILE=~/script_timings.log
+    cd ~
+    echo "`_timestamp`: Installing apt packages" >> $LOGFILE
+    _install_packages
+    echo "`_timestamp`: Installing ansible roles" >> $LOGFILE
+    _install_ansible_roles
+%{ if run_ansible ~}
+    echo "`_timestamp`: Starting ece cloud installation" >> $LOGFILE
+    ansible-playbook -i hosts ~/deploy-ece.yml
+    echo "`_timestamp`: Starting elastic deployment" >> $LOGFILE
+    ansible-playbook -i hosts ~/create-elastic-deployment.yml
+    echo "`_timestamp`: Starting certbot installation" >> $LOGFILE
+    ansible-playbook -i hosts ~/certbot.yml
+    echo "`_timestamp`: Running esrally race" >> $LOGFILE
+    ansible-playbook -i hosts esrally.yml
+%{ endif ~}
+    echo "`_timestamp`: Finished installation" >> $LOGFILE
+}
+
+# Call `_main` after everything has been defined.
+_main "$@"

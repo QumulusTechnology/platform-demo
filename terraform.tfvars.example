@@ -1,0 +1,5 @@
+ece_domain = "ece.yourdomain.com"
+lets_encrypt_email = "someone@yourdomain.com"
+path_to_openstack_rc = "~/openstack-rc.sh"
+public_ssh_key_path = "~/.ssh/id_rsa.pub"
+private_ssh_key_path = "~/.ssh/id_rsa"

@@ -1,0 +1,33 @@
+---
+- hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Add IP address of all hosts to /etc/hosts
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.*{{ hostvars[item]["ansible_hostname"]}}.*$'
+        line: '{{ hostvars[item]["ansible_default_ipv4"]["address"] }} {{ hostvars[item]["ansible_hostname"]}}'
+        state: present
+      with_items: '{{ groups["all"] }}'
+    - name: Add IP address of load balancer to /etc/hosts
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.*{{ ece_domain }}.*$'
+        line: '{{ load_balancer_ip }} {{ ece_domain }}'
+        state: present
+
+- hosts: primary
+  gather_facts: false
+  roles:
+    - ansible-elastic-cloud-enterprise
+  vars:
+    ece_primary: true
+    ece_roles: [director, coordinator, proxy, allocator]
+
+- hosts: secondaries
+  gather_facts: false
+  roles:
+    - ansible-elastic-cloud-enterprise
+  vars:
+    ece_roles: [director, coordinator, proxy, allocator]

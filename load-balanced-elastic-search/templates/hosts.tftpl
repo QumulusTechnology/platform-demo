@@ -1,0 +1,33 @@
+[management]
+management_instance ansible_connection=local
+
+%{ for s in ece_servers ~}
+%{ if s.index == 0 ~}
+[primary]
+%{ endif ~}
+%{ if s.index == 1 ~}
+
+[secondaries]
+%{ endif ~}
+${s.name} ansible_host=${s.ip_address} availability_zone=zone${s.index }
+%{ endfor ~}
+
+[ece:children]
+primary
+secondaries
+
+[all:vars]
+ansible_user=ubuntu
+ece_domain=${ece_domain}
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+load_balancer_ip=${load_balancer_ip}
+primary_hostname=${ece_servers[0].ip_address}
+certbot_admin_email="${lets_encrypt_email}"
+
+[ece:vars]
+ansible_become=yes
+availability_zone=zone1
+device_name=${device}
+data_dir=/data
+elastic_server_count=${elastic_server_count}
+ece_version=${ece_version}

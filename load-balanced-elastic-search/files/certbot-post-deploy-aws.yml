@@ -1,0 +1,45 @@
+---
+- hosts: localhost
+  gather_facts: false
+  become: true
+
+  tasks:
+
+    - name: set domain fact
+      set_fact:
+        cert_domain: "{{ lookup('ansible.builtin.file', '/home/' + ansible_user + '/domains.json') | from_json | first }}"
+
+    - name: copy certs
+      ansible.builtin.shell: |
+        mkdir -p /home/{{ ansible_user }}/certs
+        cp -f /etc/letsencrypt/live/{{ cert_domain }}/privkey.pem /home/{{ ansible_user }}/certs
+        cp -f /etc/letsencrypt/live/{{ cert_domain }}/cert.pem /home/{{ ansible_user }}/certs
+        cp -f /etc/letsencrypt/live/{{ cert_domain }}/chain.pem /home/{{ ansible_user }}/certs
+        chmod a+r /home/{{ ansible_user }}/certs/*
+
+    - name: create/update a certificate with a chain
+      community.aws.acm_certificate:
+        certificate: "{{ lookup('file', '/home/' + ansible_user + '/certs/cert.pem') }}"
+        private_key: "{{ lookup('file', '/home/' + ansible_user + '/certs/privkey.pem') }}"
+        certificate_chain: "{{ lookup('file', '/home/' + ansible_user + '/certs/chain.pem') }}"
+        name_tag: "LetEncrypt-{{ cert_domain }}"
+        state: present
+        region: "{{ aws_region }}"
+      register: certificate
+
+    - name: set cerficate_arn fact
+      set_fact:
+        cerficate_arn: "{{ certificate.certificate.arn }}"
+
+    - name: Gather information about ALB
+      amazon.aws.elb_application_lb_info:
+        load_balancer_arns:
+          - "{{ load_balancer_arn}}"
+        region: "{{ aws_region }}"
+      register: alb_info
+
+    - name: update listeners to use new certificate
+      ansible.builtin.shell: |
+        aws elbv2 modify-listener --listener-arn {{ item.listener_arn }} --certificates CertificateArn={{ cerficate_arn }}
+      when: item.protocol == "HTTPS"
+      with_items: "{{ alb_info.load_balancers[0].listeners }}"

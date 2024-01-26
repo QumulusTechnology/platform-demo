@@ -11,7 +11,7 @@ variable "lets_encrypt_email" {
 variable "run_ansible" {
   type        = bool
   description = "run ansible automatically - set to false if you want to run the installation manually after the deployment - this can be useful for debugging and troubleshooting"
-  default     = true
+
 }
 
 variable "internal_network_range" {
@@ -30,17 +30,8 @@ variable "public_network_name" {
   type = string
 }
 
-variable "path_to_openstack_rc" {
-  type        = string
-  description = "path for your OpenStack credentials"
-}
-
 variable "management_instance_image" {
   default = "Ubuntu-22.04-Jammy"
-}
-
-variable "management_instance_flavor" {
-  default = "c1.medium"
 }
 
 variable "public_ssh_key_path" {
@@ -68,29 +59,9 @@ variable "elastic_image" {
   default = "Ubuntu-20.04-Focal"
 }
 
-variable "elastic_flavor" {
-  type    = string
-  default = "c1.large"
-}
-
-variable "elastic_primary_flavor" {
-  type    = string
-  default = "c1.xxlarge"
-}
-
-variable "primary_server_count" {
-  type    = number
-  default = 1
-}
-
 variable "primary_server_roles" {
   type    = list(string)
   default = ["director", "coordinator", "proxy", "allocator"]
-}
-
-variable "secondary_server_count" {
-  type    = number
-  default = 2
 }
 
 variable "secondary_server_roles" {
@@ -99,16 +70,24 @@ variable "secondary_server_roles" {
 }
 
 variable "ece_version" {
+  type    = string
   default = "3.6.2"
 }
 
 variable "ece_user" {
+  type    = string
   default = "ubuntu"
 }
 
 # # The device name of the non-root volume that will be used by ECE
 variable "ece_device_name" {
+  type    = string
   default = "vdb"
+}
+
+variable "ece_servers_count" {
+  type    = number
+  default = 3
 }
 
 
@@ -145,7 +124,7 @@ variable "ece_load_balancer_listener_ports" {
   }))
   default = {
     80 = {
-      default_pool_port = 12300
+      default_pool_port = 12400
       protocol          = "HTTP"
       redirect_to_https = true
       https_port        = 443
@@ -240,36 +219,36 @@ variable "ece_load_balancer_pool_ports" {
       health_monitor_enabled = false
     }
     12300 = {
-      name                   = "admin-api"
-      role                   = "coordinator"
-      protocol               = "HTTP"
-      description            = "Admin API port"
-      health_monitor_enabled = true
-      health_monitor_type    = "HTTP"
-      health_monitor_http_method = "GET"
-      health_monitor_url_path = "/"
+      name                          = "admin-api"
+      role                          = "coordinator"
+      protocol                      = "HTTP"
+      description                   = "Admin API port"
+      health_monitor_enabled        = true
+      health_monitor_type           = "HTTP"
+      health_monitor_http_method    = "GET"
+      health_monitor_url_path       = "/"
       health_monitor_expected_codes = "200,400"
     }
     12400 = {
-      name                   = "cloud-ui-console"
-      role                   = "coordinator"
-      protocol               = "HTTP"
-      description            = "HTTP port for the cloud UI console"
-      health_monitor_enabled = true
-      health_monitor_type    = "HTTP"
-      health_monitor_http_method = "GET"
-      health_monitor_url_path = "/"
+      name                          = "cloud-ui-console"
+      role                          = "coordinator"
+      protocol                      = "HTTP"
+      description                   = "HTTP port for the cloud UI console"
+      health_monitor_enabled        = true
+      health_monitor_type           = "HTTP"
+      health_monitor_http_method    = "GET"
+      health_monitor_url_path       = "/"
       health_monitor_expected_codes = "200"
     }
     9200 = {
-      name                   = "elastic-api"
-      role                   = "coordinator"
-      protocol               = "HTTP"
-      description            = "main elastic port - used for all API calls"
-      health_monitor_enabled = true
-      health_monitor_type    = "HTTP"
-      health_monitor_http_method = "GET"
-      health_monitor_url_path = "/_health"
+      name                          = "elastic-api"
+      role                          = "coordinator"
+      protocol                      = "HTTP"
+      description                   = "main elastic port - used for all API calls"
+      health_monitor_enabled        = true
+      health_monitor_type           = "HTTP"
+      health_monitor_http_method    = "GET"
+      health_monitor_url_path       = "/_health"
       health_monitor_expected_codes = "200"
 
     }
@@ -290,10 +269,4 @@ variable "ece_load_balancer_pool_ports" {
       health_monitor_type    = "TCP"
     }
   }
-}
-
-variable "load_balancer_floating_ip" {
-  type = string
-  description = "hard coded floating IP address for the load balancer - useful if you want to tear down the platform and recreate it with the same IP address"
-  default = null
 }

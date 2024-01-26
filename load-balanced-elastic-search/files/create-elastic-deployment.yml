@@ -13,6 +13,10 @@
       set_fact:
         adminconsole_root_password: "{{ (bootstrap_secrets_data.content | b64decode | from_json).adminconsole_root_password }}"
 
+    - name: Get deployment config
+      set_fact:
+        deployment_config: "{{ lookup('ansible.builtin.file', '/home/' + ansible_user + '/deployment.json') | from_json }}"
+
     - name: Set the CName endpoint
       uri:
         url: "https://{{primary_hostname}}:12443/api/v1/regions/ece-region/platform/configuration/networking/deployment_domain_name?skip_cascading_operations=false"
@@ -31,29 +35,42 @@
       retries: 100
       delay: 10
 
-    - name: Set the API url
+    - name: Pause for 30 seconds allow security cluster to refresh
+      ansible.builtin.pause:
+        seconds: 30
+
+    - name: Get deployments
       uri:
-        url: "https://{{primary_hostname}}:12443/api/v1/platform/configuration/api_base_url?skip_cascading_operations=false"
-        method: PUT
+        url: "https://{{primary_hostname}}:12443/api/v1/deployments"
+        method: GET
         user: admin
         password: "{{ adminconsole_root_password }}"
         force_basic_auth: yes
         return_content: yes
         validate_certs: no
-        headers:
-          Content-Type: "application/json"
-        body_format: json
-        body: '{ "value": "https://{{ ece_domain }}:12443" }'
+        status_code: 200
       register: result
-      until: "result.status == 200"
+
+    - name: get security-cluster deployment id
+      set_fact:
+        security_cluster_deployment_id: "{{ result.json.deployments | selectattr('name', 'equalto', 'security-cluster') | map(attribute='id') | first }}"
+
+    - name: Wait for security-cluster deployment to become healthy
+      uri:
+        url: "https://{{primary_hostname}}:12443/api/v1/deployments/{{ security_cluster_deployment_id }}"
+        method: GET
+        user: admin
+        password: "{{ adminconsole_root_password }}"
+        force_basic_auth: yes
+        return_content: yes
+        validate_certs: no
+        status_code: 200
+      register: result
+      until: "result.json.healthy == true"
       retries: 100
       delay: 10
 
-    - name: Get deployment_config
-      set_fact:
-        deployment_config: "{{ lookup('ansible.builtin.file', '/home/' + ansible_user + '/deployment.json') | from_json }}"
-
-    - name: Create Deployment
+    - name: Create deployment
       uri:
         url: "https://{{primary_hostname}}:12443/api/v1/deployments?validate_only=false"
         method: POST
@@ -76,21 +93,6 @@
       set_fact:
         elasticsearch_username: "{{ result.json.resources[0].credentials.username }}"
         elasticsearch_password: "{{ result.json.resources[0].credentials.password }}"
-
-    - name: Wait for Deployment to become healthy
-      uri:
-        url: "https://{{primary_hostname}}:12443/api/v1/deployments/{{ result.json.id }}?show_security=false&show_metadata=false&show_plans=true&show_plan_logs=false&show_plan_history=false&show_plan_defaults=false&convert_legacy_plans=false&show_system_alerts=0&show_settings=false&enrich_with_template=true&force_all_plan_history=false"
-        method: GET
-        user: admin
-        password: "{{ adminconsole_root_password }}"
-        force_basic_auth: yes
-        return_content: yes
-        validate_certs: no
-        status_code: 200
-      register: result
-      until: "result.json.healthy == true"
-      retries: 100
-      delay: 10
 
     - name: Get Deployments
       uri:
@@ -153,3 +155,18 @@
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
       delegate_to: 127.0.0.1
+
+- hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+    - name: read domains
+      set_fact:
+        domains: "{{ lookup('ansible.builtin.file', '/home/' + ansible_user + '/domains.json') | from_json }}"
+    - name: Add domains to /etc/hosts
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.*{{ item }}.*$'
+        line: '{{ load_balancer_ip }} {{ item }}'
+        state: present
+      loop: "{{ domains }}"

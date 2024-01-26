@@ -5,6 +5,8 @@
 *.tfstate
 *.tfstate.*
 
+.*zip
+
 # Crash log files
 crash.log
 crash.*.log
@@ -33,6 +35,9 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-wireguard.conf
+wireguard*.conf
 
 load-balancer-*
+
+**/tmp/**
+tmp

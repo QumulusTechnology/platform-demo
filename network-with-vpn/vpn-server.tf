@@ -20,6 +20,7 @@ resource "wireguard_asymmetric_key" "default" {
 }
 
 resource "wireguard_asymmetric_key" "remote" {
+  count = var.vpn_remote_peers_count
 }
 
 resource "wireguard_preshared_key" "this" {
@@ -31,17 +32,21 @@ resource "wireguard_preshared_key" "this" {
 resource "openstack_networking_port_v2" "vpn_server_port" {
   name       = "vpn-server-port"
   network_id = openstack_networking_network_v2.internal.id
+
   fixed_ip {
     subnet_id  = openstack_networking_subnet_v2.internal.id
     ip_address = local.internal_network_vpn_server_ip
   }
+
   security_group_ids = [openstack_networking_secgroup_v2.vpn_server.id]
-  allowed_address_pairs {
-    ip_address = local.wireguard_network_vpn_server_ip
+
+  dynamic "allowed_address_pairs" {
+    for_each = local.vpn_port_allowed_address_pairs
+    content {
+      ip_address = allowed_address_pairs.value
+    }
   }
-  allowed_address_pairs {
-    ip_address = local.wireguard_network_remote_peer_ip
-  }
+
   depends_on = [
     openstack_networking_subnet_v2.internal
   ]
@@ -53,11 +58,10 @@ resource "openstack_compute_instance_v2" "vpn_server" {
   image_id  = data.openstack_images_image_v2.vpn.id
   flavor_id = data.openstack_compute_flavor_v2.vpn.id
   key_pair  = openstack_compute_keypair_v2.this.name
-  user_data = templatefile("${path.module}/templates/vpn_server_cloud_init.tftpl", {
+  user_data = templatefile("${path.module}/templates/vpn-server-cloud-init.tftpl", {
     wireguard_interface_ip        = local.wireguard_network_vpn_server_ip,
     wireguard_network_cidr_prefix = local.wireguard_network_cidr_prefix,
-    remote_peer_ip                = local.wireguard_network_remote_peer_ip,
-    remote_peer_public_key        = wireguard_asymmetric_key.remote.public_key,
+    remote_peers                  = local.wireguard_remote_peers,
     default_private_key           = wireguard_asymmetric_key.default.private_key,
     default_public_key            = wireguard_asymmetric_key.default.public_key,
     wireguard_preshared_key       = wireguard_preshared_key.this.key,
@@ -92,18 +96,19 @@ output "vpn_server_public_ip" {
   value = openstack_networking_floatingip_v2.vpn_server_public_ip.address
 }
 
-# This is the WireGuard configuration file that will be used to configure the remote peer
+# This is the WireGuard configuration file that will be used to configure the remote peers
 resource "local_sensitive_file" "wireguard_config" {
+  count           = length(local.wireguard_remote_peers)
   file_permission = "0600"
-  content = templatefile("${path.module}/templates/wireguard_conf.tftpl", {
+  content = templatefile("${path.module}/../network-with-vpn/templates/wireguard-conf.tftpl", {
     vpn_server_public_ip          = openstack_networking_floatingip_v2.vpn_server_public_ip.address,
-    remote_peer_ip                = local.wireguard_network_remote_peer_ip,
+    remote_peer_ip                = local.wireguard_remote_peers[count.index].ip_address,
     internal_network_range        = var.internal_network_range,
     wireguard_network_cidr_prefix = local.wireguard_network_cidr_prefix,
     default_public_key            = wireguard_asymmetric_key.default.public_key,
-    remote_peer_private_key       = wireguard_asymmetric_key.remote.private_key,
+    remote_peer_private_key       = local.wireguard_remote_peers[count.index].private_key,
     wireguard_preshared_key       = wireguard_preshared_key.this.key,
   })
 
-  filename = "${path.module}/../wireguard.conf"
+  filename = "${path.module}/../wireguard-${local.wireguard_remote_peers[count.index].name}.conf"
 }

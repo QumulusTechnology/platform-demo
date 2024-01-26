@@ -47,7 +47,12 @@ _install_packages() {
   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
   unzip awscliv2.zip
   sudo ./aws/install
-  rm awscliv2.zip
+  aws s3 cp s3://${s3_bucket_id}/${s3_object_1} .
+  aws s3 cp s3://${s3_bucket_id}/${s3_object_2} .
+  unzip management_instance_files_1.zip
+  unzip management_instance_files_2.zip
+  rm awscliv2.zip management_instance_files_1.zip management_instance_files_2.zip
+  chmod 0600 ~/.ssh/id_rsa
 }
 
 _install_ansible_roles() {
@@ -94,6 +99,7 @@ _main() {
 %{ if run_ansible ~}
 
     echo "$(_timestamp): Starting ece cloud installation" >> $LOGFILE
+    ansible-playbook -i hosts ~/hostname.yml 2>> $ERROR_LOGFILE
     ansible-playbook -i hosts ~/deploy-ece.yml 2>> $ERROR_LOGFILE
     echo "$(_timestamp): Starting elastic deployment" >> $LOGFILE
     ansible-playbook -i hosts ~/create-elastic-deployment.yml 2>> $ERROR_LOGFILE

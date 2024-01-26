@@ -1,5 +1,5 @@
 [management]
-management_instance ansible_connection=local
+management-instance ansible_connection=local
 
 %{ for s in ece_servers ~}
 %{ if s.index == 0 ~}
@@ -23,12 +23,13 @@ ansible_ssh_private_key_file=~/.ssh/id_rsa
 load_balancer_ip=${load_balancer_ip}
 primary_hostname=${ece_servers[0].ip_address}
 certbot_admin_email="${lets_encrypt_email}"
-load_balancer_listener_ids=${load_balancer_listener_ids}
+load_balancer_arn=${load_balancer_arn}
+aws_region=${aws_region}
 
 [ece:vars]
 ansible_become=yes
 availability_zone=zone1
 device_name=${device}
 data_dir=/data
-elastic_server_count=${elastic_server_count}
+elastic_server_count=${ece_servers_count}
 ece_version=${ece_version}

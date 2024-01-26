@@ -1,0 +1,33 @@
+---
+- hosts: localhost
+  gather_facts: false
+  become: true
+  tasks:
+
+    - name: set domain fact
+      set_fact:
+        cert_domain: "{{ lookup('ansible.builtin.file', '/home/' + ansible_user + '/domains.json') | from_json | first }}"
+
+    - name: Generate PKCS#12 file
+      community.crypto.openssl_pkcs12:
+        action: export
+        path: "/etc/letsencrypt/live/{{ cert_domain }}/cert.p12"
+        friendly_name: "{{ cert_domain }}"
+        privatekey_path: "/etc/letsencrypt/live/{{ cert_domain }}/privkey.pem"
+        certificate_path: "/etc/letsencrypt/live/{{ cert_domain }}/cert.pem"
+        other_certificates: "/etc/letsencrypt/live/{{ cert_domain }}/chain.pem"
+        state: present
+
+    - name: Upload certificate to Barbican
+      ansible.builtin.shell: |
+        . /home/{{ ansible_user }}/openstack-rc.sh
+        openstack secret store --name='LetsEncrypt-{{ ece_domain }}'  -f value -c 'Secret href' -t 'application/octet-stream' -e 'base64' \
+          --payload="$(base64 < /etc/letsencrypt/live/{{ cert_domain }}/cert.p12)"
+      register: secret_ref
+
+    - name: Update listeners with new Barbican certificate
+      ansible.builtin.shell: |
+        . /home/{{ ansible_user }}/openstack-rc.sh
+        openstack loadbalancer listener set --default-tls-container-ref "{{ secret_ref.stdout }}" {{ item }}
+        sleep 5
+      with_items: "{{ load_balancer_listener_ids.split(',') }}"

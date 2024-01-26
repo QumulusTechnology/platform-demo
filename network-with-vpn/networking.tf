@@ -5,10 +5,8 @@ resource "openstack_networking_router_v2" "public" {
 }
 
 ### Internal network for VMs
-### It is defined as external (An OpenStack term that enables the floating IP feature) so the Kubernetes can use it for load balancers
 resource "openstack_networking_network_v2" "internal" {
-  name = "internal"
-  external = true
+  name     = "internal"
 }
 
 resource "openstack_networking_subnet_v2" "internal" {

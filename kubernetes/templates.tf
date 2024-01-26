@@ -12,17 +12,17 @@ resource "openstack_containerinfra_clustertemplate_v1" "internal" {
   master_lb_enabled     = false
   floating_ip_enabled   = false
   keypair_id            = data.openstack_compute_keypair_v2.this.id
-  external_network_id   = var.internal_network_id
+  external_network_id   = openstack_networking_network_v2.internal_kubernetes_lb.id
   fixed_network         = openstack_networking_network_v2.internal_kubernetes.id
   fixed_subnet          = openstack_networking_subnet_v2.internal_kubernetes.id
   labels = {
-    kube_tag                                = var.kube_tag
-    auto_scaling_enabled                    = true
-    auto_healing_enabled                    = true
-    auto_healing_controller                 = "magnum-auto-healer"
-    ingress_controller                      = "octavia"
-    min_node_count                          = 3
-    max_node_count                          = 1
+    kube_tag                = var.kube_tag
+    auto_scaling_enabled    = true
+    auto_healing_enabled    = true
+    auto_healing_controller = "magnum-auto-healer"
+    ingress_controller      = "octavia"
+    min_node_count          = 3
+    max_node_count          = 1
   }
 }
 
@@ -44,12 +44,12 @@ resource "openstack_containerinfra_clustertemplate_v1" "public" {
   fixed_network         = openstack_networking_network_v2.public_kubernetes.id
   fixed_subnet          = openstack_networking_subnet_v2.public_kubernetes.id
   labels = {
-    kube_tag                                = var.kube_tag
-    auto_scaling_enabled                    = true
-    auto_healing_enabled                    = true
-    auto_healing_controller                 = "magnum-auto-healer"
-    ingress_controller                      = "octavia"
-    min_node_count                          = var.min_node_count
-    max_node_count                          = var.max_node_count
+    kube_tag                = var.kube_tag
+    auto_scaling_enabled    = true
+    auto_healing_enabled    = true
+    auto_healing_controller = "magnum-auto-healer"
+    ingress_controller      = "octavia"
+    min_node_count          = var.min_node_count
+    max_node_count          = var.max_node_count
   }
 }

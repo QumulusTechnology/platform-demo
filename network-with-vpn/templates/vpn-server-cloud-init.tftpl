@@ -14,7 +14,11 @@ vyos_config_commands:
   - set interfaces wireguard wg0 private-key 'default'
   - set interfaces wireguard wg0 address '${wireguard_interface_ip}/${wireguard_network_cidr_prefix}'
   - set interfaces wireguard wg0 port '51820'
-  - set interfaces wireguard wg0 peer remote allowed-ips '${remote_peer_ip}/32'
+%{ for peer in remote_peers ~}
+  - set interfaces wireguard wg0 peer remote allowed-ips '${peer.ip_address}/32'
   - set interfaces wireguard wg0 peer remote persistent-keepalive '60'
-  - set interfaces wireguard wg0 peer remote pubkey '${remote_peer_public_key}'
+  - set interfaces wireguard wg0 peer remote pubkey '${peer.public_key}'
   - set interfaces wireguard wg0 peer remote preshared-key '${wireguard_preshared_key}'
+%{ endfor ~}
+  - set nat source rule 100 translation address 'masquerade'
+  - set nat source rule 100 outbound-interface 'eth0'

@@ -1,0 +1,48 @@
+---
+
+- hosts: primary
+  gather_facts: false
+  become: true
+  tasks:
+    - name: get secrets file
+      ansible.builtin.slurp:
+        src: /data/elastic/bootstrap-state/bootstrap-secrets.json
+      register: bootstrap_secrets_data
+
+    - name: set adminconsole password
+      set_fact:
+        adminconsole_root_password: "{{ (bootstrap_secrets_data.content | b64decode | from_json).adminconsole_root_password }}"
+
+
+    - name: Get deployments
+      uri:
+        url: "https://{{primary_hostname}}:12443/api/v1/deployments"
+        method: GET
+        user: admin
+        password: "{{ adminconsole_root_password }}"
+        force_basic_auth: yes
+        return_content: yes
+        validate_certs: no
+        status_code: 200
+      register: result
+
+    - name: get main deployment id
+      set_fact:
+        main_deployment_id: "{{ result.json.deployments | selectattr('name', 'equalto', 'main-deployment') | map(attribute='id') | first }}"
+
+    - name: Wait for main deployment to become healthy
+      uri:
+        url: "https://{{primary_hostname}}:12443/api/v1/deployments/{{ main_deployment_id }}"
+        method: GET
+        user: admin
+        password: "{{ adminconsole_root_password }}"
+        force_basic_auth: yes
+        return_content: yes
+        validate_certs: no
+        status_code: 200
+      register: result
+      until: "result.json.healthy == true"
+      retries: 200
+      delay: 10
+
+   

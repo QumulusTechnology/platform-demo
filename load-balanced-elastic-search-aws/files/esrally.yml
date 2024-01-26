@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Get configuration
+      set_fact:
+        config: "{{ lookup('ansible.builtin.file', '/home/' + ansible_user + '/config.json') | from_json  }}"
+    - name:  Set elastic parameters
+      set_fact:
+        elastic_url: "{{ config | json_query('main_deployment[?name==`elasticsearch`].url')  | first | regex_replace('[A-z]*://', '') }}"
+        elastic_username: "{{ config | json_query('main_deployment[?name==`elasticsearch`].username') | first }}"
+        elastic_password: "{{ config | json_query('main_deployment[?name==`elasticsearch`].password') | first }}"
+    - name: Run esrally race
+      shell:
+        cmd: "/home/{{ ansible_user }}/.local/bin/esrally race --distribution-version=8.11.1 --track=pmc --pipeline=benchmark-only --target-hosts={{ elastic_url }} --client-options=\"use_ssl:true,verify_certs:true,basic_auth_user:'{{ elastic_username }}',basic_auth_password:'{{ elastic_password}}'\""
+      register: esrally
+    - name: Write results to file
+      ansible.builtin.copy:
+        content: "{{ esrally.stdout }}"
+        dest: "/home/{{ ansible_user }}/esrally.txt"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"

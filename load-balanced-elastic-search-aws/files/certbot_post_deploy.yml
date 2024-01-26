@@ -1,0 +1,36 @@
+---
+- hosts: localhost
+  gather_facts: false
+  become: true
+  tasks:
+
+    - name: set domain fact
+      set_fact:
+        cert_domain: "{{ lookup('ansible.builtin.file', '/home/' + ansible_user + '/domains.json') | from_json | first }}"
+
+    - name: copy certs
+      shell: |
+        mkdir -p "/home/{{ ansible_user }}/certs"
+        cp /etc/letsencrypt/live/{{cert_domain}}/* /home/{{ ansible_user }}/certs
+        chown -R {{ ansible_user }}:{{ ansible_user }} /home/{{ ansible_user }}/certs
+
+    - name: upload a self-signed certificate
+      community.aws.acm_certificate:
+        certificate: "{{ lookup('file', '/home/' + ansible_user + '/certs/cert.pem') }}"
+        private_key: "{{ lookup('file', '/home/' + ansible_user + '/certs/privkey.pem') }}"
+        certificate_chain: "{{ lookup('file', '/home/' + ansible_user + '/certs/chain.pem') }}"
+        name_tag: ece-servers
+        region: "{{ aws_region }}"
+      register: certificate
+
+    - name: Gather information about ALB
+      amazon.aws.elb_application_lb_info:
+        region: "{{ aws_region }}"
+        load_balancer_arns:
+          - "{{ load_balancer_arn }}"
+      register: lb_info
+
+    - shell: "aws elbv2 modify-listener --region {{ aws_region }} --listener-arn {{ item.listener_arn }} --certificates CertificateArn={{ certificate.certificate.arn }}"
+      when: item.protocol == "HTTPS"
+      with_items:
+        "{{ lb_info.load_balancers[0].listeners }}"

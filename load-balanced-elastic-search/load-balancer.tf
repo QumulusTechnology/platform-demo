@@ -159,18 +159,3 @@ resource "openstack_lb_l7rule_v2" "ece_listener_policy_rules" {
 
   depends_on = [ openstack_lb_l7policy_v2.ece_listener_policies ]
 }
-
-output "load_balancer_dns" {
-  value = <<EOT
-Please create the following DNS Records
-
-TYPE: A
-DOMAIN_NAME: ${var.ece_domain}
-VALUE: ${openstack_networking_floatingip_v2.elastic_floating_ip.address}
-
-TYPE: A
-DOMAIN_NAME: *.${var.ece_domain}
-VALUE: ${openstack_networking_floatingip_v2.elastic_floating_ip.address}
-
-EOT
-}

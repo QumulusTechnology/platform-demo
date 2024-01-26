@@ -1,0 +1,32 @@
+
+- hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+    - name: read domains
+      set_fact:
+        domains: "{{ lookup('ansible.builtin.file', '/home/' + ansible_user + '/domains.json') | from_json }}"
+    - name: Add domains to /etc/hosts
+      lineinfile:
+        dest: /etc/hosts
+        regexp: '.*{{ item }}.*$'
+        line: '{{ load_balancer_ip }} {{ item }}'
+        state: present
+      loop: "{{ domains }}"
+
+
+- hosts: localhost
+  gather_facts: true
+  become: true
+  vars:
+
+    certbot_create_if_missing: true
+    certbot_create_standalone_stop_services: []
+    certbot_certs:
+      - domains: "{{ lookup('ansible.builtin.file', '/home/' + ansible_user + '/domains.json') | from_json }}"
+    certbot_create_extra_args: ""
+  roles:
+    - ansible-role-certbot
+  tasks:
+    - name: Run post deploy script
+      ansible.builtin.shell: /etc/letsencrypt/renewal-hooks/deploy/certbot_post_deploy.sh

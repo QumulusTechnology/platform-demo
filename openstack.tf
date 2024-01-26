@@ -1,5 +1,5 @@
 module "network" {
-  source = "./simple-network-with-vpn"
+  source = "./network-with-vpn"
 
   internal_network_range = var.internal_network_range
   public_ssh_key_path    = var.public_ssh_key_path
@@ -22,8 +22,7 @@ module "ece" {
   internal_network_id        = module.network.internal_network_id
   internal_subnet_id         = module.network.internal_subnet_id
   vpn_security_group_id      = module.network.vpn_security_group_id
-  load_balancer_floating_ip  = var.load_balancer_floating_ip
-  run_ansible                = true
+  run_ansible                = var.run_ansible
 
   depends_on = [ module.network ]
 }
@@ -39,4 +38,14 @@ module "kubernetes" {
   public_router_id       = module.network.public_router_id
 
   depends_on = [ module.network ]
+}
+
+output "load_balancer_dns" {
+  value = module.ece.load_balancer_dns
+}
+
+
+
+output "management_instance_connection" {
+  value = module.ece.management_instance_connection
 }

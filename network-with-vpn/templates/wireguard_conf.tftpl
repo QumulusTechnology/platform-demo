@@ -1,0 +1,10 @@
+[Interface]
+PrivateKey = ${remote_peer_private_key}
+Address = ${remote_peer_ip}/${wireguard_network_cidr_prefix}
+
+[Peer]
+PublicKey = ${default_public_key}
+AllowedIPs = ${internal_network_range}
+Endpoint = ${vpn_server_public_ip}:51820
+PresharedKey = ${wireguard_preshared_key}
+PersistentKeepalive = 60

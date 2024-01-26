@@ -11,7 +11,7 @@ variable "lets_encrypt_email" {
 variable "run_ansible" {
   type        = bool
   description = "run ansible automatically - set to false if you want to run the installation manually after the deployment - this can be useful for debugging and troubleshooting"
-  default     = true
+
 }
 
 variable "internal_network_range" {
@@ -290,10 +290,4 @@ variable "ece_load_balancer_pool_ports" {
       health_monitor_type    = "TCP"
     }
   }
-}
-
-variable "load_balancer_floating_ip" {
-  type = string
-  description = "hard coded floating IP address for the load balancer - useful if you want to tear down the platform and recreate it with the same IP address"
-  default = null
 }

@@ -1,0 +1,155 @@
+---
+
+- hosts: primary
+  gather_facts: false
+  become: true
+  tasks:
+    - name: get secrets file
+      ansible.builtin.slurp:
+        src: /data/elastic/bootstrap-state/bootstrap-secrets.json
+      register: bootstrap_secrets_data
+
+    - name: set adminconsole password
+      set_fact:
+        adminconsole_root_password: "{{ (bootstrap_secrets_data.content | b64decode | from_json).adminconsole_root_password }}"
+
+    - name: Set the CName endpoint
+      uri:
+        url: "https://{{primary_hostname}}:12443/api/v1/regions/ece-region/platform/configuration/networking/deployment_domain_name?skip_cascading_operations=false"
+        method: PUT
+        user: admin
+        password: "{{ adminconsole_root_password }}"
+        force_basic_auth: yes
+        return_content: yes
+        validate_certs: no
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body: '{ "value": "{{ ece_domain }}" }'
+      register: result
+      until: "result.status == 200"
+      retries: 100
+      delay: 10
+
+    - name: Set the API url
+      uri:
+        url: "https://{{primary_hostname}}:12443/api/v1/platform/configuration/api_base_url?skip_cascading_operations=false"
+        method: PUT
+        user: admin
+        password: "{{ adminconsole_root_password }}"
+        force_basic_auth: yes
+        return_content: yes
+        validate_certs: no
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body: '{ "value": "https://{{ ece_domain }}:12443" }'
+      register: result
+      until: "result.status == 200"
+      retries: 100
+      delay: 10
+
+    - name: Get deployment_config
+      set_fact:
+        deployment_config: "{{ lookup('ansible.builtin.file', '/home/' + ansible_user + '/deployment.json') | from_json }}"
+
+    - name: Create Deployment
+      uri:
+        url: "https://{{primary_hostname}}:12443/api/v1/deployments?validate_only=false"
+        method: POST
+        user: admin
+        password: "{{ adminconsole_root_password }}"
+        force_basic_auth: yes
+        return_content: yes
+        validate_certs: no
+        headers:
+          Content-Type: "application/json"
+        body_format: json
+        body: "{{ deployment_config }}"
+        status_code: 201
+      register: result
+      until: "result.status == 201"
+      retries: 20
+      delay: 10
+
+    - name: set elasticsearch credentials fact
+      set_fact:
+        elasticsearch_username: "{{ result.json.resources[0].credentials.username }}"
+        elasticsearch_password: "{{ result.json.resources[0].credentials.password }}"
+
+    - name: Wait for Deployment to become healthy
+      uri:
+        url: "https://{{primary_hostname}}:12443/api/v1/deployments/{{ result.json.id }}?show_security=false&show_metadata=false&show_plans=true&show_plan_logs=false&show_plan_history=false&show_plan_defaults=false&convert_legacy_plans=false&show_system_alerts=0&show_settings=false&enrich_with_template=true&force_all_plan_history=false"
+        method: GET
+        user: admin
+        password: "{{ adminconsole_root_password }}"
+        force_basic_auth: yes
+        return_content: yes
+        validate_certs: no
+        status_code: 200
+      register: result
+      until: "result.json.healthy == true"
+      retries: 100
+      delay: 10
+
+    - name: Get Deployments
+      uri:
+        url: "https://{{primary_hostname}}:12443/api/v1/deployments"
+        method: GET
+        user: admin
+        password: "{{ adminconsole_root_password }}"
+        force_basic_auth: yes
+        return_content: yes
+        validate_certs: no
+        status_code: 200
+      register: result
+
+    - name: Create deployments dict
+      set_fact:
+        deployments: { "admin_console": [ { 'name': 'admin-console', 'url': "https://{{ ece_domain }}", 'username': 'admin', 'password': "{{ adminconsole_root_password }}" }] }
+
+    - name: Create url list
+      set_fact:
+        domains: [ "{{ ece_domain }}" ]
+
+    - name: Add deployments to dict
+      set_fact:
+        deployments: "{{ deployments | combine( {item.name | replace('-','_'): [] } ) }}"
+      loop: "{{ result.json.deployments }}"
+
+    - name: Add deployments to dict
+      set_fact:
+        deployments: "{{ deployments | combine( { item.name | replace('-','_'): [ { 'name': 'fleet', 'url': 'https://' + item.id + '.fleet.' + ece_domain + ':9243' },{ 'name': 'apm', 'url': 'https://' + item.id + '.apm.' + ece_domain + ':9243' }  ] }) }}"
+        domains: "{{ domains + [ item.id + '.apm.' + ece_domain, item.id + '.fleet.' + ece_domain ] }}"
+      when: item.name == "main-deployment"
+      loop: "{{ result.json.deployments }}"
+
+    - name: Add deployments to dict
+      set_fact:
+        deployments: "{{ deployments | combine( { item.0.name | replace('-','_'): deployments[item.0.name | replace('-','_') ] + [{ 'name': item.1.ref_id, 'url': 'https://' + item.1.id + '.' + ece_domain + ':9243' }] }) }}"
+        domains: "{{ domains + [ item.1.id + '.' + ece_domain ] }}"
+      when: '"integrations_server" not in item.1.ref_id and not (item.0.name == "main-deployment" and item.1.ref_id == "elasticsearch")'
+      loop: "{{ result.json.deployments | subelements('resources') }}"
+
+    - name: Add elastic search main deployment to dict
+      set_fact:
+        deployments: "{{ deployments | combine( { item.0.name | replace('-','_'): deployments[item.0.name | replace('-','_') ] + [{ 'name': item.1.ref_id, 'url': 'https://' + item.1.id + '.' + ece_domain + ':9243', 'username': elasticsearch_username, 'password': elasticsearch_password }] }) }}"
+        domains: "{{ domains + [ item.1.id + '.' + ece_domain ] }}"
+      when: 'item.0.name == "main-deployment" and item.1.ref_id == "elasticsearch"'
+      loop: "{{ result.json.deployments | subelements('resources') }}"
+
+    - name: Write config to file
+      ansible.builtin.copy:
+        content: "{{ deployments | to_nice_json }}"
+        dest: "/home/{{ ansible_user }}/config.json"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+      delegate_to: 127.0.0.1
+
+    - name: Write domains.json
+      ansible.builtin.copy:
+        content: "{{ domains | to_nice_json }}"
+        dest: "/home/{{ ansible_user }}/domains.json"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+      delegate_to: 127.0.0.1

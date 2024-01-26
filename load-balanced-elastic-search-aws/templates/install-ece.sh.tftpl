@@ -47,7 +47,15 @@ _install_packages() {
   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
   unzip awscliv2.zip
   sudo ./aws/install
-  rm awscliv2.zip
+  aws s3 cp s3://${s3_bucket_id}/${s3_object_1} .
+  aws s3 cp s3://${s3_bucket_id}/${s3_object_2} .
+  unzip management_instance_files_1.zip
+  unzip management_instance_files_2.zip
+  rm awscliv2.zip management_instance_files_1.zip management_instance_files_2.zip
+  sudo mkdir -p /etc/letsencrypt/renewal-hooks/deploy/
+  chmod a+x certbot_post_deploy.sh
+  sudo mv certbot_post_deploy.sh /etc/letsencrypt/renewal-hooks/deploy/
+  chmod 0600 ~/.ssh/id_rsa
 }
 
 _install_ansible_roles() {
@@ -71,6 +79,7 @@ _main() {
     _install_ansible_roles
 %{ if run_ansible ~}
     echo "`_timestamp`: Starting ece cloud installation" >> $LOGFILE
+    ansible-playbook -i hosts ~/hostname.yml
     ansible-playbook -i hosts ~/deploy-ece.yml
     echo "`_timestamp`: Starting elastic deployment" >> $LOGFILE
     ansible-playbook -i hosts ~/create-elastic-deployment.yml

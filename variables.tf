@@ -25,6 +25,22 @@ variable "private_ssh_key_path" {
   type        = string
   description = "path to your private ssh key"
 }
+
+variable "aws_region" {
+  type    = string
+  default = "us-east-1"
+}
+
+variable "aws_availability_zone_1" {
+  type    = string
+  default = "us-east-1a"
+}
+
+variable "aws_availability_zone_2" {
+  type    = string
+  default = "us-east-1b"
+}
+
 #####################################################################
 
 variable "trusted_networks" {
@@ -40,7 +56,7 @@ variable "public_network_name" {
 
 variable "internal_network_range" {
   type    = string
-  default = "192.168.64.0/22"
+  default = "192.168.64.0/21"
 }
 
 variable "ssh_key_name" {
@@ -48,8 +64,8 @@ variable "ssh_key_name" {
   default = "my-key-pair"
 }
 
-variable "load_balancer_floating_ip" {
-  type = string
-  description = "hard coded floating IP address for the load balancer - useful if you want to tear down the platform and recreate it with the same IP address"
-  default = null
+variable "run_ansible" {
+  type        = bool
+  description = "run ansible automatically - set to false if you want to run the installation manually after the deployment - this can be useful for debugging and troubleshooting"
+  default     = true
 }

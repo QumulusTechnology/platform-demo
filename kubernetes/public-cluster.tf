@@ -3,7 +3,7 @@ resource "openstack_containerinfra_cluster_v1" "public" {
   cluster_template_id = openstack_containerinfra_clustertemplate_v1.public.id
   master_count        = var.master_count
   node_count          = var.node_count
-  
+
   merge_labels        = true
   labels = {
     "max_node_count" = var.max_node_count
@@ -13,6 +13,8 @@ resource "openstack_containerinfra_cluster_v1" "public" {
 
 ### Adds any clusters available in the tenant to the kubeconfig file
 resource "null_resource" "update_kube_config_public" {
+
+  count = var.update_kube_config ? 1 : 0
 
   triggers = {
     id = openstack_containerinfra_cluster_v1.public.id

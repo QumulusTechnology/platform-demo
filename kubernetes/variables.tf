@@ -44,7 +44,7 @@ variable "docker_volume_size" {
 
 variable "kube_tag" {
   type    = string
-  default = "v1.27.8-rancher2"
+  default = "v1.28.6-rancher1"
 }
 
 variable "kube_image_name" {

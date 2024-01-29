@@ -13,6 +13,8 @@ resource "openstack_containerinfra_cluster_v1" "internal" {
 ### Adds any clusters available in the tenant to the kubeconfig file
 resource "null_resource" "update_kube_config_internal" {
 
+  count = var.update_kube_config ? 1 : 0
+
   triggers = {
     id = openstack_containerinfra_cluster_v1.internal.id
   }

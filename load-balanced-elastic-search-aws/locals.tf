@@ -9,17 +9,17 @@ locals {
   })
 
   hosts_file = templatefile("${path.module}/templates/hosts.tftpl", {
-    load_balancer_ip   = aws_eip.elastic_nlb[0].public_ip
-    ece_domain         = var.ece_domain
-    device             = var.ece_device_name_server
-    ece_version        = var.ece_version
-    ece_servers        = [for k, v in local.ece_servers : v]
-    ece_servers_count  = length(local.ece_servers)
-    ssh_key_filename   = basename(var.private_ssh_key_path)
-    user               = var.ece_user
-    lets_encrypt_email = var.lets_encrypt_email
-    aws_region         = var.aws_region
-    load_balancer_arn  = aws_lb.elastic_alb.arn
+    load_balancer_ip  = aws_eip.elastic_nlb[0].public_ip
+    ece_domain        = var.ece_domain
+    device            = var.ece_device_name_server
+    ece_version       = var.ece_version
+    ece_servers       = [for k, v in local.ece_servers : v]
+    ece_servers_count = length(local.ece_servers)
+    ssh_key_filename  = basename(var.private_ssh_key_path)
+    user              = var.ece_user
+    letsencrypt_email = var.letsencrypt_email
+    aws_region        = var.aws_region
+    load_balancer_arn = aws_lb.elastic_alb.arn
   })
 
   ece_servers = { for i, s in aws_instance.ece_servers :

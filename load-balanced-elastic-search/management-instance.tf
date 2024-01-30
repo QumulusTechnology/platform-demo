@@ -20,16 +20,16 @@ resource "openstack_identity_application_credential_v3" "manage_load_balancer_ce
   }
 
   access_rules {
-    path    = "/v1/secrets/*"
+    path    = "/v1/secrets/**"
     service = "key-manager"
     method  = "GET"
   }
 
 
   access_rules {
-    path    = "/v1/secrets/*/*"
+    path    = "/v1/secrets/**"
     service = "key-manager"
-    method  = "GET"
+    method  = "PUT"
   }
 
   access_rules {

@@ -22,7 +22,7 @@ locals {
     ece_servers                = [for k, v in local.ece_servers : v]
     ssh_key_filename           = basename(var.private_ssh_key_path)
     user                       = var.ece_user
-    lets_encrypt_email         = var.lets_encrypt_email,
+    letsencrypt_email          = var.letsencrypt_email,
     load_balancer_listener_ids = join(",", [for k, v in openstack_lb_listener_v2.ece_listeners : v.id if v.protocol == "TERMINATED_HTTPS"])
   })
 

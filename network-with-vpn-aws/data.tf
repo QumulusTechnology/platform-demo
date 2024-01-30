@@ -12,4 +12,5 @@ data "aws_ami" "vyos" {
   }
 
   owners = [var.aws_ami_owner]
+  
 }

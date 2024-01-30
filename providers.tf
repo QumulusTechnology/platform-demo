@@ -1,29 +1,49 @@
-terraform {
-  required_providers {
-    openstack = {
-      source  = "terraform-provider-openstack/openstack"
-      version = "1.53.0"
-    }
-    wireguard = {
-      source  = "OJFord/wireguard"
-      version = "0.2.2"
-    }
-    pkcs12 = {
-      source  = "chilicat/pkcs12"
-      version = "0.2.5"
-    }
-    aws = {
-      source  = "hashicorp/aws"
-      version = "5.33.0"
-    }
 
-  }
-}
 
 provider "openstack" {
   max_retries = 1
 }
 
-provider "aws" {
-  region = var.aws_region
+# provider "aws" {
+#   region                      = var.aws_region
+#   skip_credentials_validation = true
+#   skip_region_validation      = true
+#   skip_requesting_account_id  = true
+#   skip_metadata_api_check     = true
+# }
+
+
+provider "helm" {
+  kubernetes {
+    host                   = local.public_cluster_host
+    client_certificate     = local.public_cluster_client_certificate
+    client_key             = local.public_cluster_client_key
+    cluster_ca_certificate = local.public_cluster_cluster_ca_certificate
+  }
+}
+
+provider "helm" {
+  alias = "internal"
+  kubernetes {
+    host                   = local.internal_cluster_host
+    client_certificate     = local.internal_cluster_client_certificate
+    client_key             = local.internal_cluster_client_key
+    cluster_ca_certificate = local.internal_cluster_cluster_ca_certificate
+  }
+}
+
+provider "kubectl" {
+  host                   = local.public_cluster_host
+  client_certificate     = local.public_cluster_client_certificate
+  client_key             = local.public_cluster_client_key
+  cluster_ca_certificate = local.public_cluster_cluster_ca_certificate
+  load_config_file       = false
+}
+
+provider "kubernetes" {
+  host                   = local.public_cluster_host
+  client_certificate     = local.public_cluster_client_certificate
+  client_key             = local.public_cluster_client_key
+  cluster_ca_certificate = local.public_cluster_cluster_ca_certificate
+
 }

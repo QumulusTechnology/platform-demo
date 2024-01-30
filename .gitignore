@@ -41,3 +41,7 @@ load-balancer-*
 
 **/tmp/**
 tmp
+
+
+argocd/scripts/.*
+passwords/*

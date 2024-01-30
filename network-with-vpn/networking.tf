@@ -6,7 +6,7 @@ resource "openstack_networking_router_v2" "public" {
 
 ### Internal network for VMs
 resource "openstack_networking_network_v2" "internal" {
-  name     = "internal"
+  name = "internal"
 }
 
 resource "openstack_networking_subnet_v2" "internal" {

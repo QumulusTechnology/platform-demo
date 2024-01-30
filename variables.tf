@@ -6,7 +6,7 @@ variable "ece_domain" {
   description = "Domain name to access elastic. Please set this to something real and point it to the load balancer floating IP address"
 }
 
-variable "lets_encrypt_email" {
+variable "letsencrypt_email" {
   type        = string
   description = "email address used for letsencrypt cert request"
 }
@@ -60,7 +60,42 @@ variable "run_ansible" {
 }
 
 variable "update_kube_config" {
+  type        = bool
+  default     = false
+  description = "Update your kubeconfig file with access details of the new kubernetes clusters"
+}
+
+variable "domain" {
+  type    = string
+  default = "yourdomain.com"
+}
+
+variable "deploy_network_with_vpn" {
+  type = bool
+  default = true
+}
+
+variable "deploy_network_with_vpn_aws" {
   type = bool
   default = false
-  description = "Update your kubeconfig file with access details of the new kubernetes clusters"
+}
+
+variable "deploy_ece" {
+  type = bool
+  default = true
+}
+
+variable "deploy_ece_aws" {
+  type = bool
+  default = false
+}
+
+variable "deploy_kubernetes" {
+  type = bool
+  default = false
+}
+
+variable "deploy_argocd" {
+  type = bool
+  default = false
 }

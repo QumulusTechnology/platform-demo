@@ -28,18 +28,18 @@ variable "public_router_id" {
 
 variable "node_flavor" {
   type    = string
-  default = "t1.xlarge"
+  default = "c1.medium"
 }
 
 variable "master_flavor" {
   type    = string
-  default = "t1.medium"
+  default = "c1.small"
 }
 
 variable "docker_volume_size" {
   type        = string
   description = "Size in GB of the docker volume"
-  default     = "100"
+  default     = "10"
 }
 
 variable "kube_tag" {
@@ -57,10 +57,6 @@ variable "master_count" {
   default = 1
 }
 
-variable "node_count" {
-  type    = number
-  default = 1
-}
 
 variable "min_node_count" {
   type    = number
@@ -69,10 +65,10 @@ variable "min_node_count" {
 
 variable "max_node_count" {
   type    = number
-  default = 3
+  default = 2
 }
 
 variable "update_kube_config" {
-  type = bool
+  type        = bool
   description = "Update your kubeconfig file with access details of the new kubernetes clusters"
 }

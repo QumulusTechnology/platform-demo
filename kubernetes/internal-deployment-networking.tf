@@ -15,7 +15,7 @@ resource "openstack_networking_subnet_v2" "internal_kubernetes" {
 resource "openstack_networking_network_v2" "internal_kubernetes_lb" {
   name        = "internal-kubernetes-load-balancers"
   description = "Used to host the load balancers for Kubernetes clusters that are intended for internal use behind the Firewall and accessed through the VPN"
-  external = true
+  external    = true
 }
 
 resource "openstack_networking_subnet_v2" "internal_kubernetes_lb" {

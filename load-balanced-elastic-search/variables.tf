@@ -3,7 +3,7 @@ variable "ece_domain" {
   description = "Domain name to access elastic. Please set this to something real and point it to the load balancer floating IP address"
 }
 
-variable "lets_encrypt_email" {
+variable "letsencrypt_email" {
   type        = string
   description = "email address used for letsencrypt cert request"
 }

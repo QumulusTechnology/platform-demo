@@ -1,0 +1,100 @@
+# Cluster settings
+cluster:
+  name: internal
+
+externalServices:
+  prometheus:
+    host: https://mimir.${domain}
+    queryEndpoint: /prometheus/api/v1/query
+    writeEndpoint: /api/v1/push
+    tenantId: "master"
+    basicAuth:
+      username: "admin"
+      password: "${mimir_password}"
+
+  loki:
+    host: https://loki.${domain}
+    writeEndpoint: /loki/api/v1/push
+    tenantId: "master"
+    basicAuth:
+      username: "admin"
+      password: "${loki_password}"
+
+logs:
+  enabled: true
+
+traces:
+  enabled: false
+
+grafana-agent:
+  crds:
+    create: false
+
+prometheus-operator-crds:
+  enabled: false
+
+opencost:
+  enabled: false
+
+metrics:
+  kube-state-metrics:
+    enabled: true
+    allowList: null
+  node-exporter:
+    enabled: true
+    allowList: null
+  apiserver:
+    enabled: true
+    allowList: null
+    extraMetricRelabelingRules: |-
+      rule {
+        action = "replace"
+        source_labels = ["instance"]
+        target_label = "node"
+      }
+  kubelet:
+    enabled: true
+    allowList: null
+    extraMetricRelabelingRules: |-
+      rule {
+        action = "replace"
+        source_labels = ["instance"]
+        target_label = "node"
+      }
+
+  kubeControllerManager:
+    enabled: true
+    allowList: null
+    extraMetricRelabelingRules: |-
+      rule {
+        action = "replace"
+        source_labels = ["instance"]
+        target_label = "node"
+      }
+  kubeScheduler:
+    enabled: true
+    allowList: null
+    extraMetricRelabelingRules: |-
+      rule {
+        action = "replace"
+        source_labels = ["instance"]
+        target_label = "node"
+      }
+  kubeProxy:
+    enabled: true
+    allowList: null
+    extraMetricRelabelingRules: |-
+      rule {
+        action = "replace"
+        source_labels = ["instance"]
+        target_label = "node"
+      }
+  cadvisor:
+    enabled: true
+    allowList: null
+    extraMetricRelabelingRules: |-
+      rule {
+        action = "replace"
+        source_labels = ["instance"]
+        target_label = "node"
+      }

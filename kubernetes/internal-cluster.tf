@@ -2,11 +2,17 @@ resource "openstack_containerinfra_cluster_v1" "internal" {
   name                = "kubernetes-${var.kube_tag}-internal"
   cluster_template_id = openstack_containerinfra_clustertemplate_v1.internal.id
   master_count        = var.master_count
-  node_count          = var.node_count
+  node_count          = 1
   merge_labels        = true
   labels = {
     "max_node_count" = var.max_node_count
     "min_node_count" = var.min_node_count
+  }
+
+  lifecycle {
+    ignore_changes = [
+      node_count
+    ]
   }
 }
 

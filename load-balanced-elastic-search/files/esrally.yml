@@ -12,7 +12,7 @@
         elastic_password: "{{ config | json_query('main_deployment[?name==`elasticsearch`].password') | first }}"
     - name: Run esrally race
       shell:
-        cmd: "/home/{{ ansible_user }}/.local/bin/esrally race --distribution-version=8.11.1 --track=pmc --pipeline=benchmark-only --target-hosts={{ elastic_url }} --client-options=\"use_ssl:true,verify_certs:true,basic_auth_user:'{{ elastic_username }}',basic_auth_password:'{{ elastic_password}}'\""
+        cmd: "/home/{{ ansible_user }}/.local/bin/esrally race --distribution-version=8.11.1 --track=pmc --pipeline=benchmark-only --target-hosts={{ elastic_url }} --client-options=\"use_ssl:true,verify_certs:false,basic_auth_user:'{{ elastic_username }}',basic_auth_password:'{{ elastic_password}}'\""
       register: esrally
     - name: Write results to file
       ansible.builtin.copy:

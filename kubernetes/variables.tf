@@ -19,7 +19,7 @@ variable "vpn_security_group_id" {
 }
 
 variable "internal_network_range" {
-  type    = string
+  type = string
 }
 
 variable "public_router_id" {
@@ -27,47 +27,49 @@ variable "public_router_id" {
 }
 
 variable "node_flavor" {
-  type = string
-  default = "t1.xlarge"
+  type    = string
+  default = "c1.medium"
 }
 
 variable "master_flavor" {
-  type = string
-  default = "t1.medium"
+  type    = string
+  default = "c1.small"
 }
 
 variable "docker_volume_size" {
-  type = string
+  type        = string
   description = "Size in GB of the docker volume"
-  default = "100"
+  default     = "10"
 }
 
 variable "kube_tag" {
-  type = string
-  default = "v1.27.8-rancher2"
+  type    = string
+  default = "v1.28.6-rancher1"
 }
 
 variable "kube_image_name" {
-  type = string
+  type    = string
   default = "Fedora-Core-Stable"
 }
 
 variable "master_count" {
-  type = number
+  type    = number
   default = 1
 }
 
-variable "node_count" {
-  type = number
-  default = 1
-}
 
 variable "min_node_count" {
-  type = number
+  type    = number
   default = 1
 }
 
 variable "max_node_count" {
-  type = number
-  default = 3
+  type    = number
+  default = 2
 }
+
+variable "update_kube_config" {
+  type        = bool
+  description = "Update your kubeconfig file with access details of the new kubernetes clusters"
+}
+

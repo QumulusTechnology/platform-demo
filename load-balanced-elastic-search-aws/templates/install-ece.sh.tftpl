@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+
+set -e
+
+###############################################################################
+# Debug Options
+###############################################################################
+# Short form: set -u
+# set -o nounset
+# Short form: set -e
+# set -o errexit
+
+# Print a helpful message if a pipeline with non-zero exit code causes the
+# script to exit as described above.
+# trap 'echo "Aborting due to errexit on line $LINENO. Exit code: $?" >&2' ERR
+
+# Allow the above trap be inherited by all functions in the script.
+#
+# Short form: set -E
+# set -o errtrace
+
+# Return value of a pipeline is the value of the last (rightmost) command to
+# exit with a non-zero status, or zero if all commands in the pipeline exit
+# successfully.
+# set -o pipefail
+
+###############################################################################
+# Program Variables
+###############################################################################
+
+# Set $IFS to only newline and tab.
+# http://www.dwheeler.com/essays/filenames-in-shell.html
+IFS=$'\n\t'
+
+###############################################################################
+# Program Functions
+###############################################################################
+
+_install_packages() {
+  sudo apt update
+  sudo DEBIAN_FRONTEND=noninteractiv apt upgrade -yq
+  sudo DEBIAN_FRONTEND=noninteractiv apt install -yq jq ansible unzip python3-openstackclient python3-barbicanclient python3-octaviaclient python3-pip pbzip2
+  sudo python3 -m pip install --user --upgrade pip
+  sudo python3 -m pip install botocore boto3
+  python3 -m pip install esrally
+  cd ~
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  unzip awscliv2.zip
+  sudo ./aws/install
+  aws s3 cp s3://${s3_bucket_id}/${s3_object_1} .
+  aws s3 cp s3://${s3_bucket_id}/${s3_object_2} .
+  unzip management_instance_files_1.zip
+  unzip management_instance_files_2.zip
+  rm awscliv2.zip management_instance_files_1.zip management_instance_files_2.zip
+  chmod 0600 ~/.ssh/id_rsa
+}
+
+_install_ansible_roles() {
+  ansible-galaxy install git+https://github.com/elastic/ansible-elastic-cloud-enterprise.git
+  ansible-galaxy install git+https://github.com/geerlingguy/ansible-role-certbot.git,5.1.1
+  ansible-galaxy collection install community.crypto
+  ansible-galaxy collection install community.aws
+}
+
+_timestamp() {
+  date "+%Y-%m-%d %H:%M:%S"
+}
+
+textifyDuration() {
+   local duration=$1
+   local shiff=$duration
+   local secs=$((shiff % 60));  shiff=$((shiff / 60));
+   local mins=$((shiff % 60));  shiff=$((shiff / 60));
+   local hours=$shiff
+   local splur; if [ $secs  -eq 1 ]; then splur=''; else splur='s'; fi
+   local mplur; if [ $mins  -eq 1 ]; then mplur=''; else mplur='s'; fi
+   local hplur; if [ $hours -eq 1 ]; then hplur=''; else hplur='s'; fi
+   if [[ $hours -gt 0 ]]; then
+      txt="$hours hour$hplur, $mins minute$mplur, $secs second$splur"
+   elif [[ $mins -gt 0 ]]; then
+      txt="$mins minute$mplur, $secs second$splur"
+   else
+      txt="$secs second$splur"
+   fi
+   echo "$txt"
+}
+
+_main() {
+    SECONDS=0
+    LOGFILE=~/script_timings.log
+    ERROR_LOGFILE=~/script_errors.log
+    cd ~
+    echo "$(_timestamp): Starting installation" >> $LOGFILE
+    echo "$(_timestamp): Installing apt packages" >> $LOGFILE
+    _install_packages 2>> $ERROR_LOGFILE
+    echo "$(_timestamp): Installing ansible roles" >> $LOGFILE
+    _install_ansible_roles 2>> $ERROR_LOGFILE
+
+%{ if run_ansible ~}
+
+    echo "$(_timestamp): Starting ece cloud installation" >> $LOGFILE
+    ansible-playbook -i hosts ~/hostname.yml 2>> $ERROR_LOGFILE
+    ansible-playbook -i hosts ~/deploy-ece.yml 2>> $ERROR_LOGFILE
+    echo "$(_timestamp): Starting elastic deployment" >> $LOGFILE
+    ansible-playbook -i hosts ~/create-elastic-deployment.yml 2>> $ERROR_LOGFILE
+    echo "$(_timestamp): Starting certbot installation" >> $LOGFILE
+    set +e
+    ansible-playbook -i hosts ~/certbot.yml 2>> $ERROR_LOGFILE
+    CERTBOT_EXIT_CODE=$?
+    set -e
+    echo "$(_timestamp): Waiting for elastic deployment to reach healthy state" >> $LOGFILE
+    ansible-playbook -i hosts ~/wait-for-elastic-deployment.yml 2>> $ERROR_LOGFILE
+    echo "$(_timestamp): Running esrally race" >> $LOGFILE
+    ansible-playbook -i hosts esrally.yml 2>> $ERROR_LOGFILE
+
+   if [ $CERTBOT_EXIT_CODE -ne 0 ]; then
+      echo "$(_timestamp): Reattempting cerbot due to previous failure" >> $LOGFILE
+      ansible-playbook -i hosts ~/certbot.yml 2>> $ERROR_LOGFILE
+   fi
+
+%{ endif ~}
+
+    echo "$(_timestamp): Finished installation" >> $LOGFILE
+    echo "Total time elapsed: $(textifyDuration $SECONDS)" >> $LOGFILE
+}
+
+# Call `_main` after everything has been defined.
+_main "$@"

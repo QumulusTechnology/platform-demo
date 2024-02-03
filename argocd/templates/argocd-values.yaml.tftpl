@@ -1,0 +1,25 @@
+crds:
+  install: true
+
+server:
+  ingress:
+    enabled: true
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt"
+      nginx.ingress.kubernetes.io/from-to-www-redirect: "true"
+    ingressClassName: nginx
+    hosts:
+      - argo.${domain}
+    tls:
+      - secretName: argocd-cert
+        hosts:
+          - argo.${domain}
+
+
+configs:
+  secret:
+    argocdServerAdminPassword: ${argocd_secret}
+
+  params:
+    server.insecure: true
+    dexserver.disable.tls: true

@@ -22,7 +22,8 @@ ece_domain=${ece_domain}
 ansible_ssh_private_key_file=~/.ssh/id_rsa
 load_balancer_ip=${load_balancer_ip}
 primary_hostname=${ece_servers[0].ip_address}
-certbot_admin_email="${lets_encrypt_email}"
+certbot_admin_email="${letsencrypt_email}"
+load_balancer_listener_ids=${load_balancer_listener_ids}
 
 [ece:vars]
 ansible_become=yes

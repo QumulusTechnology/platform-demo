@@ -1,0 +1,69 @@
+# Cluster settings
+cluster:
+  name: internal
+
+externalServices:
+  prometheus:
+    host: https://mimir.${domain}
+    queryEndpoint: /prometheus/api/v1/query
+    writeEndpoint: /api/v1/push
+    tenantId: "master"
+    basicAuth:
+      username: "admin"
+      password: "${mimir_password}"
+
+  loki:
+    host: https://loki.${domain}
+    writeEndpoint: /loki/api/v1/push
+    tenantId: "master"
+    basicAuth:
+      username: "admin"
+      password: "${loki_password}"
+
+logs:
+  enabled: true
+
+traces:
+  enabled: false
+
+grafana-agent:
+  crds:
+    create: true
+
+prometheus-operator-crds:
+  enabled: true
+
+opencost:
+  enabled: false
+
+metrics:
+  kube-state-metrics:
+    enabled: true
+    allowList: null
+  node-exporter:
+    enabled: true
+    allowList: null
+  apiserver:
+    enabled: true
+    allowList: null
+  kubelet:
+    enabled: true
+    allowList: null
+  kubeControllerManager:
+    enabled: true
+    allowList: null
+  kubeScheduler:
+    enabled: true
+    allowList: null
+  kubeProxy:
+    enabled: true
+    allowList: null
+  cadvisor:
+    enabled: true
+    allowList: null
+    extraMetricRelabelingRules: |-
+      rule {
+        action = "replace"
+        source_labels = ["instance"]
+        target_label = "node"
+      }

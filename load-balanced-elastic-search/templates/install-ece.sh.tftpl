@@ -39,40 +39,82 @@ IFS=$'\n\t'
 _install_packages() {
   sudo apt update
   sudo DEBIAN_FRONTEND=noninteractiv apt upgrade -yq
-  sudo DEBIAN_FRONTEND=noninteractiv apt install -yq jq ansible python3-openstackclient python3-barbicanclient python3-octaviaclient python3-pip pbzip2
+  sudo DEBIAN_FRONTEND=noninteractiv apt install -yq jq ansible unzip python3-openstackclient python3-barbicanclient python3-octaviaclient python3-pip pbzip2
   sudo python3 -m pip install --user --upgrade pip
+  sudo python3 -m pip install botocore boto3
   python3 -m pip install esrally
+  cd ~
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  unzip awscliv2.zip
+  sudo ./aws/install
+  rm awscliv2.zip
 }
 
 _install_ansible_roles() {
   ansible-galaxy install git+https://github.com/elastic/ansible-elastic-cloud-enterprise.git
   ansible-galaxy install git+https://github.com/geerlingguy/ansible-role-certbot.git,5.1.1
   ansible-galaxy collection install community.crypto
-  ansible-galaxy collection install openstack.cloud
+  ansible-galaxy collection install community.aws
 }
 
 _timestamp() {
   date "+%Y-%m-%d %H:%M:%S"
 }
 
+textifyDuration() {
+   local duration=$1
+   local shiff=$duration
+   local secs=$((shiff % 60));  shiff=$((shiff / 60));
+   local mins=$((shiff % 60));  shiff=$((shiff / 60));
+   local hours=$shiff
+   local splur; if [ $secs  -eq 1 ]; then splur=''; else splur='s'; fi
+   local mplur; if [ $mins  -eq 1 ]; then mplur=''; else mplur='s'; fi
+   local hplur; if [ $hours -eq 1 ]; then hplur=''; else hplur='s'; fi
+   if [[ $hours -gt 0 ]]; then
+      txt="$hours hour$hplur, $mins minute$mplur, $secs second$splur"
+   elif [[ $mins -gt 0 ]]; then
+      txt="$mins minute$mplur, $secs second$splur"
+   else
+      txt="$secs second$splur"
+   fi
+   echo "$txt"
+}
+
 _main() {
+    SECONDS=0
     LOGFILE=~/script_timings.log
+    ERROR_LOGFILE=~/script_errors.log
     cd ~
-    echo "`_timestamp`: Installing apt packages" >> $LOGFILE
-    _install_packages
-    echo "`_timestamp`: Installing ansible roles" >> $LOGFILE
-    _install_ansible_roles
+    echo "$(_timestamp): Starting installation" >> $LOGFILE
+    echo "$(_timestamp): Installing apt packages" >> $LOGFILE
+    _install_packages 2>> $ERROR_LOGFILE
+    echo "$(_timestamp): Installing ansible roles" >> $LOGFILE
+    _install_ansible_roles 2>> $ERROR_LOGFILE
+
 %{ if run_ansible ~}
-    echo "`_timestamp`: Starting ece cloud installation" >> $LOGFILE
-    ansible-playbook -i hosts ~/deploy-ece.yml
-    echo "`_timestamp`: Starting elastic deployment" >> $LOGFILE
-    ansible-playbook -i hosts ~/create-elastic-deployment.yml
-    echo "`_timestamp`: Starting certbot installation" >> $LOGFILE
-    ansible-playbook -i hosts ~/certbot.yml
-    echo "`_timestamp`: Running esrally race" >> $LOGFILE
-    ansible-playbook -i hosts esrally.yml
+
+    echo "$(_timestamp): Starting ece cloud installation" >> $LOGFILE
+    ansible-playbook -i hosts ~/deploy-ece.yml 2>> $ERROR_LOGFILE
+    echo "$(_timestamp): Starting elastic deployment" >> $LOGFILE
+    ansible-playbook -i hosts ~/create-elastic-deployment.yml 2>> $ERROR_LOGFILE
+    echo "$(_timestamp): Starting certbot installation" >> $LOGFILE
+    set +e
+    ansible-playbook -i hosts ~/certbot.yml 2>> $ERROR_LOGFILE
+    CERTBOT_EXIT_CODE=$?
+    set -e
+    echo "$(_timestamp): Waiting for elastic deployment to reach healthy state" >> $LOGFILE
+    ansible-playbook -i hosts ~/wait-for-elastic-deployment.yml 2>> $ERROR_LOGFILE
+    echo "$(_timestamp): Running esrally race" >> $LOGFILE
+    ansible-playbook -i hosts esrally.yml 2>> $ERROR_LOGFILE
+
+   if [ $CERTBOT_EXIT_CODE -ne 0 ]; then
+      echo "$(_timestamp): Reattempting cerbot due to previous failure" >> $LOGFILE
+      ansible-playbook -i hosts ~/certbot.yml 2>> $ERROR_LOGFILE
+   fi
 %{ endif ~}
-    echo "`_timestamp`: Finished installation" >> $LOGFILE
+
+    echo "$(_timestamp): Finished installation" >> $LOGFILE
+    echo "Total time elapsed: $(textifyDuration $SECONDS)" >> $LOGFILE
 }
 
 # Call `_main` after everything has been defined.

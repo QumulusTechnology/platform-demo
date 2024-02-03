@@ -13,15 +13,18 @@ data "openstack_images_image_v2" "elastic" {
 }
 
 data "openstack_compute_flavor_v2" "management_instance" {
-  name = var.management_instance_flavor
+  vcpus = 4
+  ram   = 4096
 }
 
 data "openstack_compute_flavor_v2" "elastic" {
-  name = var.elastic_flavor
+  vcpus = 4
+  ram   = 16384
 }
 
 data "openstack_compute_flavor_v2" "elastic_primary" {
-  name = var.elastic_primary_flavor
+  vcpus = 8
+  ram   = 32768
 }
 
 data "local_file" "load_balancer_tls_cert" {
@@ -29,4 +32,8 @@ data "local_file" "load_balancer_tls_cert" {
   depends_on = [
     null_resource.load_balancer_pkcs12
   ]
+}
+
+data "external" "env" {
+  program = ["${path.module}/scripts/env.sh"]
 }

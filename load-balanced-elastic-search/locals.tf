@@ -4,36 +4,46 @@ locals {
   install_ece_script = templatefile("${path.module}/templates/install-ece.sh.tftpl", {
     run_ansible = var.run_ansible,
   })
-  hosts_file = templatefile("${path.module}/templates/hosts.tftpl", {
-    load_balancer_ip     = openstack_lb_loadbalancer_v2.elastic.vip_address
-    ece_domain           = var.ece_domain
-    device               = var.ece_device_name
-    ece_version          = var.ece_version
-    ece_servers          = local.ece_servers
-    elastic_server_count = var.primary_server_count + var.secondary_server_count
-    ece_servers          = [for k, v in local.ece_servers : v]
-    ssh_key_filename     = basename(var.private_ssh_key_path)
-    user                 = var.ece_user
-    lets_encrypt_email = var.lets_encrypt_email
+
+  openstack_rc = templatefile("${path.module}/templates/openstack-rc.sh.tftpl", {
+    secret_id    = openstack_identity_application_credential_v3.manage_load_balancer_certificates.id
+    secret       = openstack_identity_application_credential_v3.manage_load_balancer_certificates.secret
+    project_name = data.external.env.result["os_project_name"]
+    auth_url     = data.external.env.result["os_auth_url"]
   })
 
-  ece_servers = { for i in range(var.primary_server_count + var.secondary_server_count) :
+  hosts_file = templatefile("${path.module}/templates/hosts.tftpl", {
+    load_balancer_ip           = openstack_lb_loadbalancer_v2.elastic.vip_address
+    ece_domain                 = var.ece_domain
+    device                     = var.ece_device_name
+    ece_version                = var.ece_version
+    ece_servers                = local.ece_servers
+    elastic_server_count       = var.ece_servers_count
+    ece_servers                = [for k, v in local.ece_servers : v]
+    ssh_key_filename           = basename(var.private_ssh_key_path)
+    user                       = var.ece_user
+    letsencrypt_email          = var.letsencrypt_email,
+    load_balancer_listener_ids = join(",", [for k, v in openstack_lb_listener_v2.ece_listeners : v.id if v.protocol == "TERMINATED_HTTPS"])
+  })
+
+  ece_servers = { for i in range(var.ece_servers_count) :
     i => {
-      name       = "ece-server-${i}"
-      type       = i <= var.primary_server_count ? "primary" : "secondary"
-      roles      = i <= var.primary_server_count ? var.primary_server_roles : var.secondary_server_roles
+      name       = "ece-server-${i + 1}"
+      type       = i == 0 ? "primary" : "secondary"
+      roles      = i == 0 ? var.primary_server_roles : var.secondary_server_roles
       ip_address = cidrhost(local.internal_network_cidr, 5 + i)
       index      = i
     }
   }
   management_server = {
-    var.primary_server_count + var.secondary_server_count = {
+    length(local.ece_servers) = {
       name       = "management-instance"
       type       = "management-instance"
       roles      = ["letsencrypt"]
       ip_address = openstack_networking_port_v2.management_instance_port.all_fixed_ips[0]
     }
   }
+
   all_servers = merge(local.ece_servers, local.management_server)
 
   ece_load_balancer_listener_ports = { for k, v in var.ece_load_balancer_listener_ports :
@@ -86,5 +96,4 @@ locals {
   ece_load_balancer_listener_policies = { for i, p in concat(local.ece_load_balancer_listener_layer7_policies, local.ece_load_balancer_listener_redirect_to_https_policies) :
     i => p
   }
-
 }

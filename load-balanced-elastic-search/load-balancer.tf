@@ -29,9 +29,10 @@ resource "tls_self_signed_cert" "load_balancer_tls_cert" {
   dns_names = [
     var.ece_domain,
     "*.${var.ece_domain}",
-     "*.fleet.${var.ece_domain}",
-     "*.apm.${var.ece_domain}",
-    ]
+    "*.fleet.${var.ece_domain}",
+    "*.apm.${var.ece_domain}",
+    "*.kb.${var.ece_domain}"
+  ]
   validity_period_hours = 8760
   allowed_uses = [
     "key_encipherment",
@@ -80,7 +81,7 @@ resource "openstack_keymanager_secret_v1" "load_balancer_tls_cert" {
 ## Create a load balancer pool for each port that the load balancer will use to communicate with ECE
 resource "openstack_lb_pool_v2" "ece_pools" {
   for_each        = var.ece_load_balancer_pool_ports
-  name            = "${each.value.name}-${lower(replace(each.value.protocol,"_","-"))}-${each.value.role}-port-${each.key}"
+  name            = "${each.value.name}-${lower(replace(each.value.protocol, "_", "-"))}-${each.value.role}-port-${each.key}"
   protocol        = each.value.protocol
   lb_method       = each.value.lb_method
   loadbalancer_id = openstack_lb_loadbalancer_v2.elastic.id
@@ -95,7 +96,7 @@ resource "openstack_lb_member_v2" "ece_pool_members" {
   pool_id       = local.ece_load_balancer_pool_members[count.index].pool_id
   subnet_id     = var.internal_subnet_id
   weight        = 1
-  depends_on = [ openstack_lb_pool_v2.ece_pools ]
+  depends_on    = [openstack_lb_pool_v2.ece_pools]
 }
 
 # ### Create a health monitor for each ECE pool
@@ -109,13 +110,13 @@ resource "openstack_lb_monitor_v2" "ece_pool_monitors" {
   delay          = 20
   timeout        = 10
   max_retries    = 5
-  depends_on = [ openstack_lb_member_v2.ece_pool_members ]
+  depends_on     = [openstack_lb_pool_v2.ece_pools]
 }
 
 ### Create a listener for each Internet facing port that ECE requires
 resource "openstack_lb_listener_v2" "ece_listeners" {
   for_each                  = var.ece_load_balancer_listener_ports
-  name                      = "${var.ece_load_balancer_pool_ports[each.value.default_pool_port].name}-${lower(replace(each.value.protocol,"_","-"))}-port-${each.key}"
+  name                      = "${var.ece_load_balancer_pool_ports[each.value.default_pool_port].name}-${lower(replace(each.value.protocol, "_", "-"))}-port-${each.key}"
   protocol                  = each.value.protocol
   protocol_port             = each.key
   loadbalancer_id           = openstack_lb_loadbalancer_v2.elastic.id
@@ -131,9 +132,9 @@ resource "openstack_lb_listener_v2" "ece_listeners" {
     ]
   }
   depends_on = [
-    openstack_lb_monitor_v2.ece_pool_monitors,
+    openstack_lb_pool_v2.ece_pools,
     openstack_keymanager_secret_v1.load_balancer_tls_cert
-    ]
+  ]
 }
 
 ### Create any layer 7 policies that are required
@@ -146,7 +147,7 @@ resource "openstack_lb_l7policy_v2" "ece_listener_policies" {
   redirect_pool_id = each.value.redirect_pool_id
   redirect_url     = each.value.redirect_url
 
-  depends_on = [ openstack_lb_listener_v2.ece_listeners ]
+  depends_on = [openstack_lb_listener_v2.ece_listeners]
 }
 
 # ### Create any layer 7 rules that are required
@@ -157,20 +158,5 @@ resource "openstack_lb_l7rule_v2" "ece_listener_policy_rules" {
   compare_type = each.value.rule.compare_type
   value        = each.value.rule.value
 
-  depends_on = [ openstack_lb_l7policy_v2.ece_listener_policies ]
-}
-
-output "load_balancer_dns" {
-  value = <<EOT
-Please create the following DNS Records
-
-TYPE: A
-DOMAIN_NAME: ${var.ece_domain}
-VALUE: ${openstack_networking_floatingip_v2.elastic_floating_ip.address}
-
-TYPE: A
-DOMAIN_NAME: *.${var.ece_domain}
-VALUE: ${openstack_networking_floatingip_v2.elastic_floating_ip.address}
-
-EOT
+  depends_on = [openstack_lb_l7policy_v2.ece_listener_policies]
 }

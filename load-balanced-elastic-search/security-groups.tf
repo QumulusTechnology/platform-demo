@@ -1,6 +1,6 @@
 resource "openstack_networking_secgroup_v2" "load_balancer" {
   name = "internet access to load balancer"
-  tags = [ "ece-load-balancer" ]
+  tags = ["ece-load-balancer"]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "load_balancer_rules" {

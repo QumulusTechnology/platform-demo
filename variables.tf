@@ -6,14 +6,9 @@ variable "ece_domain" {
   description = "Domain name to access elastic. Please set this to something real and point it to the load balancer floating IP address"
 }
 
-variable "lets_encrypt_email" {
+variable "letsencrypt_email" {
   type        = string
   description = "email address used for letsencrypt cert request"
-}
-
-variable "path_to_openstack_rc" {
-  type        = string
-  description = "path for your OpenStack credentials"
 }
 
 variable "public_ssh_key_path" {
@@ -24,6 +19,16 @@ variable "public_ssh_key_path" {
 variable "private_ssh_key_path" {
   type        = string
   description = "path to your private ssh key"
+}
+
+variable "aws_region" {
+  type    = string
+  default = "us-east-1"
+}
+
+variable "calculate_aws_costs" {
+  type    = bool
+  default = false
 }
 #####################################################################
 
@@ -40,7 +45,7 @@ variable "public_network_name" {
 
 variable "internal_network_range" {
   type    = string
-  default = "192.168.64.0/22"
+  default = "192.168.64.0/21"
 }
 
 variable "ssh_key_name" {
@@ -48,8 +53,55 @@ variable "ssh_key_name" {
   default = "my-key-pair"
 }
 
-variable "load_balancer_floating_ip" {
-  type = string
-  description = "hard coded floating IP address for the load balancer - useful if you want to tear down the platform and recreate it with the same IP address"
-  default = null
+variable "run_ansible" {
+  type        = bool
+  description = "run ansible automatically - set to false if you want to run the installation manually after the deployment - this can be useful for debugging and troubleshooting"
+  default     = true
+}
+
+variable "update_kube_config" {
+  type        = bool
+  default     = false
+  description = "Update your kubeconfig file with access details of the new kubernetes clusters"
+}
+
+variable "domain" {
+  type    = string
+  default = "yourdomain.com"
+}
+
+variable "deploy_network_with_vpn" {
+  type    = bool
+  default = true
+}
+
+variable "deploy_network_with_vpn_aws" {
+  type    = bool
+  default = false
+}
+
+variable "deploy_ece" {
+  type    = bool
+  default = true
+}
+
+variable "deploy_ece_aws" {
+  type    = bool
+  default = false
+}
+
+variable "deploy_kubernetes" {
+  type    = bool
+  default = false
+}
+
+variable "deploy_argocd" {
+  type    = bool
+  default = false
+}
+
+variable "deploy_internal_cluster_helm_charts" {
+  type        = bool
+  default     = false
+  description = "deploy any helm charts to the internal cluster (the VPN needs to be connected for this to work)"
 }

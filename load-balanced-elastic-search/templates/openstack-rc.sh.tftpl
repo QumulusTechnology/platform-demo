@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# Clear any old environment that may conflict.
+for key in $( set | awk '{FS="="}  /^OS_/ {print $1}' ); do unset $key ; done
+
+export OS_AUTH_TYPE=v3applicationcredential
+export OS_AUTH_URL=${auth_url}
+export OS_IDENTITY_API_VERSION=3
+export OS_REGION_NAME=RegionOne
+export OS_INTERFACE=public
+export OS_APPLICATION_CREDENTIAL_ID=${secret_id}
+export OS_APPLICATION_CREDENTIAL_SECRET=${secret}
+

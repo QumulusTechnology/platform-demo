@@ -3,7 +3,6 @@ terraform {
     helm = {
       source                = "hashicorp/helm"
       version               = ">= 2.12.1"
-      configuration_aliases = [helm.internal]
     }
 
     kubectl = {

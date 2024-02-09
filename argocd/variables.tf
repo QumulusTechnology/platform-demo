@@ -11,7 +11,3 @@ variable "letsencrypt_email" {
   description = "email address used for letsencrypt cert request"
 }
 
-variable "deploy_internal_cluster_helm_charts" {
-  type        = bool
-  description = "deploy any helm charts to the internal cluster (the VPN needs to be connected for this to work)"
-}

@@ -4,20 +4,20 @@ cluster:
 
 externalServices:
   prometheus:
-    host: https://mimir.${domain}
+    host: "${mimir_host}"
     queryEndpoint: /prometheus/api/v1/query
     writeEndpoint: /api/v1/push
-    tenantId: "master"
+    tenantId: "${mimir_tenant}"
     basicAuth:
-      username: "admin"
+      username: "${mimir_username}"
       password: "${mimir_password}"
 
   loki:
-    host: https://loki.${domain}
+    host: ${loki_host}
     writeEndpoint: /loki/api/v1/push
-    tenantId: "master"
+    tenantId: "${loki_tenant}"
     basicAuth:
-      username: "admin"
+      username: "${loki_username}"
       password: "${loki_password}"
 
 logs:

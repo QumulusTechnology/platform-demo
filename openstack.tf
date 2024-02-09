@@ -41,7 +41,6 @@ module "kubernetes" {
   public_router_id       = module.network[0].public_router_id
   update_kube_config     = var.update_kube_config
 
-
   depends_on = [module.network]
 }
 
@@ -49,13 +48,29 @@ module "argocd" {
   count  = local.deploy_argocd ? 1 : 0
   source = "./argocd"
 
-  providers = {
-    helm.internal = helm.internal
-  }
-
-  domain                              = var.domain
-  letsencrypt_email                   = var.letsencrypt_email
-  deploy_internal_cluster_helm_charts = var.deploy_internal_cluster_helm_charts
+  domain            = var.domain
+  letsencrypt_email = var.letsencrypt_email
 
   depends_on = [module.network]
+}
+
+
+module "grafana_agent" {
+  count  = var.deploy_internal_cluster_helm_charts ? 1 : 0
+  source = "./grafana-agent"
+
+  providers = {
+    helm = helm.internal
+  }
+
+  mimir_host     = module.argocd[0].mimir_host
+  mimir_username = module.argocd[0].mimir_username
+  mimir_password = module.argocd[0].mimir_password
+  mimir_tenant   = module.argocd[0].mimir_tenant
+  loki_host      = module.argocd[0].loki_host
+  loki_username  = module.argocd[0].loki_username
+  loki_password  = module.argocd[0].loki_password
+  loki_tenant    = module.argocd[0].loki_tenant
+
+  depends_on = [module.argocd]
 }

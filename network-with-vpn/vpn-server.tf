@@ -40,11 +40,8 @@ resource "openstack_networking_port_v2" "vpn_server_port" {
 
   security_group_ids = [openstack_networking_secgroup_v2.vpn_server.id]
 
-  dynamic "allowed_address_pairs" {
-    for_each = local.vpn_port_allowed_address_pairs
-    content {
-      ip_address = allowed_address_pairs.value
-    }
+  allowed_address_pairs {
+    ip_address = local.wireguard_network_cidr
   }
 
   depends_on = [

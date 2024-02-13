@@ -4,15 +4,6 @@ provider "openstack" {
   max_retries = 1
 }
 
-# provider "aws" {
-#   region                      = var.aws_region
-#   skip_credentials_validation = true
-#   skip_region_validation      = true
-#   skip_requesting_account_id  = true
-#   skip_metadata_api_check     = true
-# }
-
-
 provider "helm" {
   kubernetes {
     host                   = local.public_cluster_host

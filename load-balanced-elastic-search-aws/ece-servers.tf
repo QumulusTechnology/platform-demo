@@ -25,14 +25,16 @@ resource "aws_instance" "ece_servers" {
   root_block_device {
     delete_on_termination = true
     volume_size           = 30
-    volume_type           = "gp3"
+    volume_type           = var.elastic_ebs_volume_type
+    iops                  = var.elastic_ebs_provisioned_iops_root_volume
   }
 
   ebs_block_device {
     device_name           = "/dev/${var.ece_device_name_aws}"
     delete_on_termination = true
     volume_size           = 300
-    volume_type           = "gp3"
+    volume_type           = var.elastic_ebs_volume_type
+    iops                  = var.elastic_ebs_provisioned_iops_data_volume
   }
 
   tags = {

@@ -76,14 +76,25 @@ variable "vpn_security_group_id" {
 }
 
 variable "elastic_flavor" {
-  type    = string
-  default = "t3a.xlarge"
+  type = string
 }
 
 variable "elastic_primary_flavor" {
-  type    = string
-  default = "t3a.2xlarge"
+  type = string
 }
+
+variable "elastic_ebs_volume_type" {
+  type = string
+}
+
+variable "elastic_ebs_provisioned_iops_root_volume" {
+  type = number
+}
+
+variable "elastic_ebs_provisioned_iops_data_volume" {
+  type = number
+}
+
 
 variable "primary_server_roles" {
   type    = list(string)

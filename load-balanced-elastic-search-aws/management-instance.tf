@@ -98,7 +98,7 @@ write_files:
     permissions: '0700'
 runcmd:
   - chown -R ${var.ece_user}:${var.ece_user} /home/${var.ece_user}
-  - su ${var.ece_user} /home/${var.ece_user}/install-ece.sh
+  - ${local.run_ansible}
 EOT
 
   tags = {

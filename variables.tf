@@ -26,6 +26,31 @@ variable "aws_region" {
   default = "us-east-1"
 }
 
+variable "aws_elastic_flavor" {
+  type    = string
+  default = "t3a.xlarge"
+}
+
+variable "aws_elastic_primary_flavor" {
+  type    = string
+  default = "t3a.2xlarge"
+}
+
+variable "aws_elastic_ebs_volume_type" {
+  type    = string
+  default = "gp3"
+}
+
+variable "aws_elastic_ebs_provisioned_iops_root_volume" {
+  type    = number
+  default = "3000"
+}
+
+variable "aws_elastic_ebs_provisioned_iops_data_volume" {
+  type    = number
+  default = "3000"
+}
+
 variable "calculate_aws_costs" {
   type    = bool
   default = false
@@ -75,19 +100,9 @@ variable "deploy_network_with_vpn" {
   default = true
 }
 
-variable "deploy_network_with_vpn_aws" {
-  type    = bool
-  default = false
-}
-
 variable "deploy_ece" {
   type    = bool
   default = true
-}
-
-variable "deploy_ece_aws" {
-  type    = bool
-  default = false
 }
 
 variable "deploy_kubernetes" {

@@ -1,8 +1,7 @@
 locals {
-  aws_hourly_costs  = var.deploy_network_with_vpn_aws && var.calculate_aws_costs ? "${"$"}${module.pricing[0].hourly}" : null
-  aws_monthly_costs = var.deploy_network_with_vpn_aws && var.calculate_aws_costs ? "${"$"}${module.pricing[0].monthly}" : null
+  aws_hourly_costs  = var.calculate_aws_costs ? "${"$"}${module.pricing[0].total_price_per_hour}" : null
+  aws_monthly_costs = var.calculate_aws_costs ? "${"$"}${module.pricing[0].total_price_per_month}" : null
   deploy_ece        = var.deploy_network_with_vpn && var.deploy_ece
-  deploy_ece_aws    = var.deploy_network_with_vpn_aws && var.deploy_ece_aws
   deploy_kubernetes = var.deploy_network_with_vpn && var.deploy_kubernetes
   deploy_argocd     = var.deploy_kubernetes && var.deploy_argocd
 
@@ -21,5 +20,5 @@ To calculate the AWS costs for this deployment, run the following command:
 
 Note: The aws costs do not include metred charges like egress, disk_iops etc or backup/snapshot costs
 EOT
-  calculate_aws_costs         = var.deploy_network_with_vpn_aws && !var.calculate_aws_costs ? local.calculate_aws_costs_message : null
+  calculate_aws_costs         = var.calculate_aws_costs ? null : local.calculate_aws_costs_message
 }

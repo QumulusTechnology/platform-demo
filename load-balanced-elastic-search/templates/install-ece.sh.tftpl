@@ -81,40 +81,39 @@ textifyDuration() {
 }
 
 _main() {
-    SECONDS=0
-    LOGFILE=~/script_timings.log
-    ERROR_LOGFILE=~/script_errors.log
-    cd ~
-    echo "$(_timestamp): Starting installation" >> $LOGFILE
-    echo "$(_timestamp): Installing apt packages" >> $LOGFILE
-    _install_packages 2>> $ERROR_LOGFILE
-    echo "$(_timestamp): Installing ansible roles" >> $LOGFILE
-    _install_ansible_roles 2>> $ERROR_LOGFILE
+   SECONDS=0
+   LOGFILE=~/script_timings.log
+   ERROR_LOGFILE=~/script_errors.log
+   cd ~
+   echo "$(_timestamp): Starting script" >> $LOGFILE
+   echo "$(_timestamp): Installing apt packages" >> $LOGFILE
+   _install_packages 2>> $ERROR_LOGFILE
+   echo "$(_timestamp): Installing ansible roles" >> $LOGFILE
+   _install_ansible_roles 2>> $ERROR_LOGFILE
+   echo "$(_timestamp): Starting ece cloud installation" >> $LOGFILE
+   ansible-playbook -i hosts ~/deploy-ece.yml 2>> $ERROR_LOGFILE
+   echo "$(_timestamp): Starting elastic deployment" >> $LOGFILE
+   ansible-playbook -i hosts ~/create-elastic-deployment.yml 2>> $ERROR_LOGFILE
+   echo "$(_timestamp): Waiting for elastic deployment to reach healthy state" >> $LOGFILE
+   ansible-playbook -i hosts ~/wait-for-elastic-deployment.yml 2>> $ERROR_LOGFILE
+   echo "$(_timestamp): Finished elastic deployment" >> $LOGFILE
+   echo "Total time elapsed: $(textifyDuration $SECONDS)" >> $LOGFILE
 
-%{ if run_ansible ~}
+   set +e
+   echo "$(_timestamp): Starting certbot installation" >> $LOGFILE
+   ansible-playbook -i hosts ~/certbot.yml 2>> $ERROR_LOGFILE
+   CERTBOT_EXIT_CODE=$?
 
-    echo "$(_timestamp): Starting ece cloud installation" >> $LOGFILE
-    ansible-playbook -i hosts ~/deploy-ece.yml 2>> $ERROR_LOGFILE
-    echo "$(_timestamp): Starting elastic deployment" >> $LOGFILE
-    ansible-playbook -i hosts ~/create-elastic-deployment.yml 2>> $ERROR_LOGFILE
-    echo "$(_timestamp): Starting certbot installation" >> $LOGFILE
-    set +e
-    ansible-playbook -i hosts ~/certbot.yml 2>> $ERROR_LOGFILE
-    CERTBOT_EXIT_CODE=$?
-    set -e
-    echo "$(_timestamp): Waiting for elastic deployment to reach healthy state" >> $LOGFILE
-    ansible-playbook -i hosts ~/wait-for-elastic-deployment.yml 2>> $ERROR_LOGFILE
-    echo "$(_timestamp): Running esrally race" >> $LOGFILE
-    ansible-playbook -i hosts esrally.yml 2>> $ERROR_LOGFILE
+   echo "$(_timestamp): Running esrally race" >> $LOGFILE
+   ansible-playbook -i hosts esrally.yml 2>> $ERROR_LOGFILE
+   echo "$(_timestamp): Finished esrally race" >> $LOGFILE
 
    if [ $CERTBOT_EXIT_CODE -ne 0 ]; then
       echo "$(_timestamp): Reattempting cerbot due to previous failure" >> $LOGFILE
       ansible-playbook -i hosts ~/certbot.yml 2>> $ERROR_LOGFILE
    fi
-%{ endif ~}
 
-    echo "$(_timestamp): Finished installation" >> $LOGFILE
-    echo "Total time elapsed: $(textifyDuration $SECONDS)" >> $LOGFILE
+   echo "$(_timestamp): Finished script" >> $LOGFILE
 }
 
 # Call `_main` after everything has been defined.

@@ -1,4 +1,4 @@
 ece_domain = "ece.yourdomain.com"
-lets_encrypt_email = "someone@yourdomain.com"
+letsencrypt_email = "someone@yourdomain.com"
 public_ssh_key_path = "~/.ssh/id_rsa.pub"
 private_ssh_key_path = "~/.ssh/id_rsa"

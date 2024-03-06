@@ -58,3 +58,10 @@
 # output "calculate_aws_costs" {
 #   value = local.calculate_aws_costs
 # }
+
+# module "pricing" {
+#  count   = var.calculate_aws_costs ? 1 : 0
+#  source  = "terraform-aws-modules/pricing/aws//modules/pricing"
+#  version = "2.0.2"
+#  content = jsondecode(local.terraform_tf_state)
+# }

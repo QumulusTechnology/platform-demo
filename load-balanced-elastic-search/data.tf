@@ -13,18 +13,15 @@ data "openstack_images_image_v2" "elastic" {
 }
 
 data "openstack_compute_flavor_v2" "management_instance" {
-  vcpus = 4
-  ram   = 4096
+  name  = "c1.small"
 }
 
 data "openstack_compute_flavor_v2" "elastic" {
-  vcpus = 4
-  ram   = 16384
+  name = "c1.xlarge"
 }
 
 data "openstack_compute_flavor_v2" "elastic_primary" {
-  vcpus = 8
-  ram   = 32768
+  name = "c1.xxlarge"
 }
 
 data "local_file" "load_balancer_tls_cert" {

@@ -1,4 +1,9 @@
-ece_domain = "ece.yourdomain.com"
-letsencrypt_email = "someone@yourdomain.com"
-public_ssh_key_path = "~/.ssh/id_rsa.pub"
-private_ssh_key_path = "~/.ssh/id_rsa"
+ece_domain                          = "ece.yourdomain.com"
+letsencrypt_email                   = "someone@yourdomain.com"
+public_ssh_key_path                 = "~/.ssh/id_rsa.pub"
+private_ssh_key_path                = "~/.ssh/id_rsa"
+deploy_network_with_vpn             = true
+deploy_ece                          = true
+deploy_kubernetes                   = false
+deploy_argocd                       = false
+deploy_internal_cluster_helm_charts = false

@@ -5,10 +5,13 @@ resource "random_password" "argocd_password" {
   special = false
 }
 
-resource "local_sensitive_file" "argocd_password" {
-  file_permission = "0600"
-  content         = random_password.argocd_password.result
-  filename        = "${path.module}/../passwords/argocd-password.txt"
+resource "random_password" "argocd_password_salt" {
+  length = 8
+}
+
+resource "htpasswd_password" "argocd_password" {
+  password = random_password.argocd_password.result
+  salt     = random_password.argocd_password_salt.result
 }
 
 resource "helm_release" "argocd" {
@@ -22,7 +25,7 @@ resource "helm_release" "argocd" {
   values = [sensitive(templatefile("${path.module}/templates/argocd-values.yaml.tftpl", {
     domain            = var.domain
     letsencrypt_email = var.letsencrypt_email
-    argocd_secret     = data.external.get_secrets.result["argocd_secret"]
+    argocd_secret     = ":${htpasswd_password.argocd_password.bcrypt}"
     }))
   ]
 }

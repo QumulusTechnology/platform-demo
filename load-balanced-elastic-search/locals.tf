@@ -1,6 +1,6 @@
 locals {
   internal_network_cidr = cidrsubnet(var.internal_network_range, 2, 0)
-  run_ansible = var.run_ansible ? "su ${var.ece_user} /home/${var.ece_user}/install-ece.sh" : "echo 'Skipping ECE installation'"
+  run_ansible           = var.run_ansible ? "su ${var.ece_user} /home/${var.ece_user}/install-ece.sh" : "echo 'Skipping ECE installation'"
   install_ece_script = templatefile("${path.module}/templates/install-ece.sh.tftpl", {
     run_ansible = var.run_ansible,
   })

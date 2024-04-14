@@ -13,7 +13,7 @@ data "openstack_images_image_v2" "elastic" {
 }
 
 data "openstack_compute_flavor_v2" "management_instance" {
-  name  = "c1.small"
+  name = "c1.small"
 }
 
 data "openstack_compute_flavor_v2" "elastic" {

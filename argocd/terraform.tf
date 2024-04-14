@@ -1,8 +1,8 @@
 terraform {
   required_providers {
     helm = {
-      source                = "hashicorp/helm"
-      version               = ">= 2.12.1"
+      source  = "hashicorp/helm"
+      version = ">= 2.12.1"
     }
 
     kubectl = {
@@ -12,6 +12,10 @@ terraform {
     kubernetes = {
       source  = "hashicorp/kubernetes"
       version = ">= 2.25.2"
+    }
+    htpasswd = {
+      source  = "loafoe/htpasswd"
+      version = ">= 1.0.4"
     }
   }
 }

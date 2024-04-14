@@ -48,19 +48,15 @@
 # }
 
 # output "aws_hourly_costs" {
-#   value = local.aws_hourly_costs
+#   value = local.calculate_aws_costs ? "${"$"}${module.pricing[0].total_price_per_hour}" : null
 # }
 
 # output "aws_monthly_costs" {
-#   value = local.aws_monthly_costs
-# }
-
-# output "calculate_aws_costs" {
-#   value = local.calculate_aws_costs
+#   value = local.calculate_aws_costs ? "${"$"}${module.pricing[0].total_price_per_month}" : null
 # }
 
 # module "pricing" {
-#  count   = var.calculate_aws_costs ? 1 : 0
+#  count   = local.calculate_aws_costs ? 1 : 0
 #  source  = "terraform-aws-modules/pricing/aws//modules/pricing"
 #  version = "2.0.2"
 #  content = jsondecode(local.terraform_tf_state)

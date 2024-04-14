@@ -38,3 +38,8 @@ provider "kubernetes" {
   cluster_ca_certificate = local.public_cluster_cluster_ca_certificate
 
 }
+
+
+provider "htpasswd" {
+  # Configuration options
+}

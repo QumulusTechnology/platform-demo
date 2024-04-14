@@ -3,10 +3,13 @@ resource "random_password" "mimir_password" {
   special = false
 }
 
-resource "local_sensitive_file" "mimir_password" {
-  file_permission = "0600"
-  content         = random_password.mimir_password.result
-  filename        = "${path.module}/../passwords/mimir-password.txt"
+resource "random_password" "mimir_password_salt" {
+  length = 8
+}
+
+resource "htpasswd_password" "mimir_password" {
+  password = random_password.mimir_password.result
+  salt     = random_password.mimir_password_salt.result
 }
 
 resource "kubectl_manifest" "mimir_ns" {
@@ -25,7 +28,7 @@ resource "kubernetes_secret" "mimir_secret" {
     namespace = "mimir"
   }
   data = {
-    ".htpasswd" = data.external.get_secrets.result["mimir_secret"]
+    ".htpasswd" = "admin:${htpasswd_password.mimir_password.bcrypt}"
   }
   type = "Opaque"
   depends_on = [
@@ -43,9 +46,9 @@ resource "kubernetes_secret" "mimir_credentials" {
     "mimir_host"     = "https://mimir.${var.domain}"
     "mimir_password" = random_password.mimir_password.result
     "mimir_username" = "admin"
-    "loki_host"      = "https://loki.${var.domain}"
-    "loki_password"  = random_password.loki_password.result
-    "loki_username"  = "admin"
+    "mimir_host"     = "https://mimir.${var.domain}"
+    "mimir_password" = random_password.mimir_password.result
+    "mimir_username" = "admin"
   }
   type = "Opaque"
   depends_on = [

@@ -1,18 +1,18 @@
 
 
-resource "random_password" "argocd_password" {
-  length  = 24
-  special = false
-}
+# resource "random_password" "argocd_password" {
+#   length  = 24
+#   special = false
+# }
 
-resource "random_password" "argocd_password_salt" {
-  length = 8
-}
+# resource "random_password" "argocd_password_salt" {
+#   length = 8
+# }
 
-resource "htpasswd_password" "argocd_password" {
-  password = random_password.argocd_password.result
-  salt     = random_password.argocd_password_salt.result
-}
+# resource "htpasswd_password" "argocd_password" {
+#   password = random_password.argocd_password.result
+#   salt     = random_password.argocd_password_salt.result
+# }
 
 resource "helm_release" "argocd" {
   name             = "argocd"
@@ -25,7 +25,7 @@ resource "helm_release" "argocd" {
   values = [sensitive(templatefile("${path.module}/templates/argocd-values.yaml.tftpl", {
     domain            = var.domain
     letsencrypt_email = var.letsencrypt_email
-    argocd_secret     = ":${htpasswd_password.argocd_password.bcrypt}"
+#    argocd_secret     = ":${htpasswd_password.argocd_password.bcrypt}"
     }))
   ]
 }

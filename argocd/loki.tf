@@ -12,6 +12,13 @@ resource "htpasswd_password" "loki_password" {
   salt     = random_password.loki_password_salt.result
 }
 
+resource "local_sensitive_file" "loki_password" {
+  file_permission = "0600"
+  content         = random_password.loki_password.result
+  filename        = "${path.module}/../passwords/loki-password.txt"
+}
+
+
 resource "kubectl_manifest" "loki_ns" {
   yaml_body = <<YAML
 apiVersion: v1

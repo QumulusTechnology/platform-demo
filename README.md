@@ -1,10 +1,21 @@
 ﻿# Qumulus Platform Demo README
 
-This repository contains terraform code that will enable you to quickly get started with OpenStack and allow you to explore some of it's features using a "real life" example deployment of Elastic Cloud behind a load balancer.
+This repository contains terraform code that will enable you to quickly get started with OpenStack and allow you to explore some of it's features using a "real life" example deployment of Elastic Cloud behind a load balancer and a Kubernetes deployment
+
+The entire deployment will fully utilise 4 QUMs of cloud capacity. If you are deploying this code to a trial account, please ensure your environment is clean before deploying or it might fail as the trial includes 4 QUMs.
 
 Please refer to [this](https://support.qumulus.io/hc/en-gb/articles/16590120710162-Initializing-Environment) helpdesk article for detailed instructions how to get started with this code.
 
-The following modules are accessed in the `openstack.tf` file.
+As a minimum you would need to to create a `terrform.tfvars` file with the following content
+
+```
+domain                              = "asubdomain.yourdomain.com"
+letsencrypt_email                   = "someone@yourdomain.com"
+public_ssh_key_path                 = "~/.ssh/id_rsa.pub"
+private_ssh_key_path                = "~/.ssh/id_rsa"
+```
+
+The following modules are deployed in the `openstack.tf` file.
 
 ## Network with VPN
 The network-with-vpn module sets up a private network and VPN to access the private network. The VPN is protected with a security group and a route is pointed to the VPN sever so that VPN clients can communicate with the local area networks without the need for NAT. We used [VyOS](https://vyos.io/) as the VPN server and [Wireguard](https://www.wireguard.com/) as the VPN protocol but you are free to choose any VPN server or protocol of your choice. Additionally, you can setup clustered VPN servers using availability groups on multiple compute nodes as OpenStack allows for virtual IPs shared by multiple instances.
@@ -27,8 +38,6 @@ The management instance runs a series of ansible playbooks, that does the follow
 
 The load balancer has a number of layer 7 listeners, that terminate TLS sessions with various policies and rules to allow for https redirection, and multiple pools linked to a single listener.
 
-Note: this module requires 4 VMs using a total of 68 GB of RAM so please make sure you have enough capacity free before running it.
-
 To access the logs, follow the instructions displayed in the terraform output.
 
 There is alternative code for the above 2 modules that allow you to replicate the above infrastructure on AWS for comparison. You can access it be uncommenting out the modules in the file `aws.tf`. You will need AWS credentials to be able to run this code.
@@ -36,8 +45,6 @@ There is alternative code for the above 2 modules that allow you to replicate th
 The script records the time taken to complete all the above steps, so that you can easily benchmark your cloud deployment and run a performance comparison against AWS as an example.
 
 ## Kubernetes
-
-This module is disabled by default as you might not have enough capacity to run it side by side with load balanced elastic search module. To use this module set the value `deploy_kubernetes    = true` in your `terraform.tfvars` file.
 
 This module creates the network layout required to support both private Kubernetes clusters (only accessible using a VPN) and public Kubernetes clusters, where any load balanced services you create from within Kubernetes are exposed using a public IP. You can optionally expose the `kube-api`to the Internet by placing a load balancer in front of it and setting the label `master_lb_floating_ip_enabled` to true which we have done in the demo code.
 
@@ -62,7 +69,7 @@ The above directory should exist and be empty.  And then point your Kubernetes c
 
     export KUBECONFIG=${directory}
 
-Alternatively, you can set the terraform variable `update_kube_config` to `true` in your `terraform.tfvars` file and it will add any OpenStack clusters you have access to, to your `~/.kube/config` file automatically. You will need the `openstack cli`, `kubectl` and `yq` installed for this to work. Refer to the helpdesk article above on how to install these tools.
+Alternatively, you can set the terraform variable `update_kube_config` to `true` in your `terraform.tfvars` file, (this now defaults to `true`) and it will add any OpenStack clusters you have access to, to your `~/.kube/config` file automatically. You will need the `openstack cli`, `kubectl` and `yq` installed for this to work. Refer to the helpdesk article above on how to install these tools.
 
 ## ArgoCD
 
@@ -84,26 +91,7 @@ In order to setup ArgoCD to deploy the above tools we take the following steps u
  3. We deploy an ArgoCD project and an ArgoCD [App of Apps](https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/#app-of-apps-pattern) application that points to https://github.com/QumulusTechnology/argocd-demo
  4. ArgoCD than deploys all the applications from the above repo, handling LetsEncrypt cert-request and providing access using Nginx as an ingress via an OpenStack load-balancer and using dynamically created OpenStack volumes for it's `Persistent Volume` storage.
 
-To deploy ArgoCD. set the following in  the `terraform.tfvars` file (we disable ECE so that you will have enough RAM)
-
-    deploy_ece           = false
-    deploy_argocd        = true
-    deploy_kubernetes    = true
-    domain               = yourdomain.com (or subdomain.yourdomain.com)
-
-(please use a valid domain or subdomain under your control)
-
 and then run `terraform apply`
-
-Note: in order to generate random passwords for ArgoCD, Mimir and Loki, a utility called `htpasswd` is required and terraform will fail to run if `htpasswd` is not installed.
-
-To install `httpasswd` please use the following commands
-
-Ubuntu/Debian - `sudo apt install apache2-utils`
-
-Redhat/Centos - `yum install httpd-tools`
-
-Mac OS        -  should already be installed.
 
 ### Post Installation:
 

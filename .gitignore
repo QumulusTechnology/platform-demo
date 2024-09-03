@@ -47,3 +47,5 @@ argocd/scripts/.*
 passwords/*
 
 openstack-rc.sh
+
+**/load-balancer-cert.p12

@@ -73,10 +73,10 @@ resource "openstack_networking_floatingip_v2" "vpn_server_public_ip" {
   pool = data.openstack_networking_network_v2.public.name
 }
 
-resource "openstack_compute_floatingip_associate_v2" "vpn_server_public_ip_association" {
+
+resource "openstack_networking_floatingip_associate_v2" "vpn_server_public_ip_association" {
   floating_ip = openstack_networking_floatingip_v2.vpn_server_public_ip.address
-  instance_id = openstack_compute_instance_v2.vpn_server.id
-  fixed_ip    = openstack_networking_port_v2.vpn_server_port.fixed_ip.0.ip_address
+  port_id     = openstack_networking_port_v2.vpn_server_port.id
 }
 
 # This is the route that tells OpenStack to route traffic to the VPN server for the WireGuard network

@@ -29,7 +29,7 @@ resource "openstack_compute_instance_v2" "elastic" {
   block_device {
     source_type           = "blank"
     destination_type      = "volume"
-    volume_size           = 300
+    volume_size           = 175
     boot_index            = 1
     delete_on_termination = true
   }

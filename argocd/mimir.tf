@@ -12,6 +12,13 @@ resource "htpasswd_password" "mimir_password" {
   salt     = random_password.mimir_password_salt.result
 }
 
+resource "local_sensitive_file" "mimir_password" {
+  file_permission = "0600"
+  content         = random_password.mimir_password.result
+  filename        = "${path.module}/../passwords/mimir-password.txt"
+}
+
+
 resource "kubectl_manifest" "mimir_ns" {
   yaml_body = <<YAML
 apiVersion: v1

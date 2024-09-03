@@ -24,7 +24,7 @@ _install_packages() {
   unzip management_instance_files_1.zip
   unzip management_instance_files_2.zip
   rm awscliv2.zip management_instance_files_1.zip management_instance_files_2.zip
-  chmod 0600 ~/.ssh/id_rsa
+  chmod 0600 ~/.ssh/${private_ssh_key_filename}
 }
 
 _install_ansible_roles() {

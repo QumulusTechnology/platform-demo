@@ -28,12 +28,12 @@ variable "public_router_id" {
 
 variable "node_flavor" {
   type    = string
-  default = "c1.medium"
+  default = "t1.medium"
 }
 
 variable "master_flavor" {
   type    = string
-  default = "c1.small"
+  default = "m1.small"
 }
 
 variable "docker_volume_size" {
@@ -44,7 +44,7 @@ variable "docker_volume_size" {
 
 variable "kube_tag" {
   type    = string
-  default = "v1.28.6-rancher1"
+  default = "v1.30.4-rancher1"
 }
 
 variable "kube_image_name" {
@@ -73,3 +73,12 @@ variable "update_kube_config" {
   description = "Update your kubeconfig file with access details of the new kubernetes clusters"
 }
 
+variable "deploy_public_kubernetes_cluster" {
+  type    = bool
+  default = true
+}
+
+variable "deploy_internal_kubernetes_cluster" {
+  type    = bool
+  default = false
+}

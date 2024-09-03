@@ -19,7 +19,7 @@ module "ece" {
   private_ssh_key_path   = var.private_ssh_key_path
   keypair_name           = module.network[0].keypair_name
   letsencrypt_email      = var.letsencrypt_email
-  ece_domain             = var.ece_domain
+  ece_domain             = local.ece_domain
   internal_network_id    = module.network[0].internal_network_id
   internal_subnet_id     = module.network[0].internal_subnet_id
   vpn_security_group_id  = module.network[0].vpn_security_group_id
@@ -32,14 +32,16 @@ module "kubernetes" {
   count  = local.deploy_kubernetes ? 1 : 0
   source = "./kubernetes"
 
-  internal_network_range = var.internal_network_range
-  public_network_name    = var.public_network_name
-  keypair_name           = module.network[0].keypair_name
-  internal_network_id    = module.network[0].internal_network_id
-  internal_subnet_id     = module.network[0].internal_subnet_id
-  vpn_security_group_id  = module.network[0].vpn_security_group_id
-  public_router_id       = module.network[0].public_router_id
-  update_kube_config     = var.update_kube_config
+  internal_network_range             = var.internal_network_range
+  public_network_name                = var.public_network_name
+  keypair_name                       = module.network[0].keypair_name
+  internal_network_id                = module.network[0].internal_network_id
+  internal_subnet_id                 = module.network[0].internal_subnet_id
+  vpn_security_group_id              = module.network[0].vpn_security_group_id
+  public_router_id                   = module.network[0].public_router_id
+  update_kube_config                 = var.update_kube_config
+  deploy_public_kubernetes_cluster   = var.deploy_public_kubernetes_cluster
+  deploy_internal_kubernetes_cluster = var.deploy_internal_kubernetes_cluster
 
   depends_on = [module.network]
 }

@@ -1,7 +1,8 @@
 locals {
+  ece_domain        = "ece.${var.domain}"
   deploy_ece        = var.deploy_network_with_vpn && var.deploy_ece
-  deploy_kubernetes = var.deploy_network_with_vpn && var.deploy_kubernetes
-  deploy_argocd     = var.deploy_kubernetes && var.deploy_argocd
+  deploy_kubernetes = var.deploy_network_with_vpn && var.deploy_public_kubernetes_cluster || var.deploy_network_with_vpn && var.deploy_internal_kubernetes_cluster
+  deploy_argocd     = local.deploy_kubernetes && var.deploy_argocd
 
   public_cluster_host                     = local.deploy_argocd == false ? null : module.kubernetes[0].public_cluster_host
   public_cluster_client_certificate       = local.deploy_argocd == false ? null : module.kubernetes[0].public_cluster_client_certificate

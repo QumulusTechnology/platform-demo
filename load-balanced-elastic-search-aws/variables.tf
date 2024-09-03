@@ -44,7 +44,7 @@ variable "private_network_cidrs" {
 }
 
 variable "elastic_ami" {
-  default = "ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"
+  default = "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
 }
 
 variable "management_instance_ami" {

@@ -35,9 +35,9 @@
       retries: 100
       delay: 10
 
-    - name: Pause for 30 seconds allow security cluster to refresh
+    - name: Pause for 5 seconds allow security cluster to refresh
       ansible.builtin.pause:
-        seconds: 30
+        seconds: 5
 
     - name: Get deployments
       uri:

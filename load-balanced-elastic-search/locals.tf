@@ -1,8 +1,11 @@
 locals {
-  internal_network_cidr = cidrsubnet(var.internal_network_range, 2, 0)
-  run_ansible           = var.run_ansible ? "su ${var.ece_user} /home/${var.ece_user}/install-ece.sh" : "echo 'Skipping ECE installation'"
+  internal_network_cidr    = cidrsubnet(var.internal_network_range, 2, 0)
+  public_ssh_key_filename  = basename(var.public_ssh_key_path)
+  private_ssh_key_filename = basename(var.private_ssh_key_path)
+  run_ansible              = var.run_ansible ? "su ${var.ece_user} /home/${var.ece_user}/install-ece.sh" : "echo 'Skipping ECE installation'"
   install_ece_script = templatefile("${path.module}/templates/install-ece.sh.tftpl", {
-    run_ansible = var.run_ansible,
+    run_ansible              = var.run_ansible,
+    private_ssh_key_filename = local.private_ssh_key_filename,
   })
 
   openstack_rc = templatefile("${path.module}/templates/openstack-rc.sh.tftpl", {
@@ -22,8 +25,9 @@ locals {
     ece_servers                = [for k, v in local.ece_servers : v]
     ssh_key_filename           = basename(var.private_ssh_key_path)
     user                       = var.ece_user
-    letsencrypt_email          = var.letsencrypt_email,
+    letsencrypt_email          = var.letsencrypt_email
     load_balancer_listener_ids = join(",", [for k, v in openstack_lb_listener_v2.ece_listeners : v.id if v.protocol == "TERMINATED_HTTPS"])
+    private_ssh_key_filename   = local.private_ssh_key_filename
   })
 
   ece_servers = { for i in range(var.ece_servers_count) :

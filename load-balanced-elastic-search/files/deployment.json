@@ -24,7 +24,7 @@
               },
               "instance_configuration_id": "data.default",
               "size": {
-                "value": 8192,
+                "value": 4096,
                 "resource": "memory"
               }
             },
@@ -34,7 +34,7 @@
                 "data_warm",
                 "remote_cluster_client"
               ],
-              "zone_count": 1,
+              "zone_count": 3,
               "elasticsearch": {
                 "node_attributes": {
                   "data": "warm"
@@ -52,7 +52,7 @@
                 "data_cold",
                 "remote_cluster_client"
               ],
-              "zone_count": 1,
+              "zone_count": 3,
               "elasticsearch": {
                 "node_attributes": {
                   "data": "cold"
@@ -69,7 +69,7 @@
               "node_roles": [
                 "data_frozen"
               ],
-              "zone_count": 1,
+              "zone_count": 3,
               "elasticsearch": {
                 "node_attributes": {
                   "data": "frozen"
@@ -87,7 +87,7 @@
                 "ingest",
                 "remote_cluster_client"
               ],
-              "zone_count": 1,
+              "zone_count": 3,
               "instance_configuration_id": "coordinating",
               "size": {
                 "value": 0,
@@ -100,7 +100,7 @@
                 "master",
                 "remote_cluster_client"
               ],
-              "zone_count": 1,
+              "zone_count": 3,
               "instance_configuration_id": "master",
               "size": {
                 "value": 0,
@@ -113,16 +113,16 @@
                 "ml",
                 "remote_cluster_client"
               ],
-              "zone_count": 1,
+              "zone_count": 3,
               "instance_configuration_id": "ml",
               "size": {
-                "value": 0,
+                "value": 1024,
                 "resource": "memory"
               }
             }
           ],
           "elasticsearch": {
-            "version": "8.11.1",
+            "version": "8.13.4",
             "enabled_built_in_plugins": []
           },
           "deployment_template": {
@@ -150,17 +150,64 @@
                 "value": 1024,
                 "resource": "memory"
               },
-              "zone_count": 1
+              "zone_count": 3
             }
           ],
           "kibana": {
-            "version": "8.11.1"
+            "version": "8.13.4"
           }
         }
       }
     ],
-    "enterprise_search": [],
-    "integrations_server": []
+    "enterprise_search": [
+      {
+        "ref_id": "enterprise_search",
+        "elasticsearch_cluster_ref_id": "elasticsearch",
+        "region": "ece-region",
+        "plan": {
+          "cluster_topology": [
+            {
+              "node_type": {
+                "appserver": true,
+                "worker": true,
+                "connector": true
+              },
+              "instance_configuration_id": "enterprise.search",
+              "size": {
+                "value": 2048,
+                "resource": "memory"
+              },
+              "zone_count": 3
+            }
+          ],
+          "enterprise_search": {
+            "version": "8.13.4"
+          }
+        }
+      }
+    ],
+    "integrations_server": [
+      {
+        "ref_id": "integrations_server",
+        "elasticsearch_cluster_ref_id": "elasticsearch",
+        "region": "ece-region",
+        "plan": {
+          "cluster_topology": [
+            {
+              "instance_configuration_id": "integrations.server",
+              "size": {
+                "value": 512,
+                "resource": "memory"
+              },
+              "zone_count": 3
+            }
+          ],
+          "integrations_server": {
+            "version": "8.13.4"
+          }
+        }
+      }
+    ]
   },
   "settings": {
     "autoscaling_enabled": false

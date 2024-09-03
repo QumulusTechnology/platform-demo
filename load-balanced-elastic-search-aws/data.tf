@@ -54,7 +54,8 @@ EOT
   source {
     content  = <<EOT
 #!/bin/bash
-sudo -u ubuntu ansible-playbook -i /home/${var.ece_user}/hosts /home/${var.ece_user}/certbot_post_deploy.yml
+  sudo -u ${var.ece_user} sh -c '. /home/ubuntu/ansible_venv/bin/activate ; ansible-playbook -i /home/${var.ece_user}/hosts /home/${var.ece_user}/certbot-post-deploy.yml'
+
 EOT
     filename = "certbot_post_deploy.sh"
   }

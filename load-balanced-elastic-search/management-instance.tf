@@ -109,7 +109,7 @@ write_files:
     permissions: '0600'
   - content: |
       #!/bin/bash
-      sudo -u ubuntu ansible-playbook -i /home/${var.ece_user}/hosts /home/${var.ece_user}/certbot-post-deploy-os.yml
+      sudo -u ${var.ece_user} sh -c '. /home/ubuntu/ansible_venv/bin/activate ; ansible-playbook -i /home/${var.ece_user}/hosts /home/${var.ece_user}/certbot-post-deploy-os.yml'
     path: /etc/letsencrypt/renewal-hooks/deploy/certbot-post-deploy.sh
     permissions: '0700'
   - content: |

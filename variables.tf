@@ -1,11 +1,6 @@
 ### This section is for variables that are specific to your environment and you should create a `terraform.tfvars` file to set these variables
 ### You can use the `terraform.tfvars.example` file as a template
 
-variable "ece_domain" {
-  type        = string
-  description = "Domain name to access elastic. Please set this to something real and point it to the load balancer floating IP address"
-}
-
 variable "letsencrypt_email" {
   type        = string
   description = "email address used for letsencrypt cert request"
@@ -84,15 +79,8 @@ variable "run_ansible" {
   default     = true
 }
 
-variable "update_kube_config" {
-  type        = bool
-  default     = false
-  description = "Update your kubeconfig file with access details of the new kubernetes clusters"
-}
-
 variable "domain" {
-  type    = string
-  default = "yourdomain.com"
+  type = string
 }
 
 variable "deploy_network_with_vpn" {
@@ -105,18 +93,29 @@ variable "deploy_ece" {
   default = true
 }
 
-variable "deploy_kubernetes" {
-  type    = bool
-  default = false
-}
-
 variable "deploy_argocd" {
   type    = bool
-  default = false
+  default = true
 }
 
 variable "deploy_internal_cluster_helm_charts" {
   type        = bool
   default     = false
   description = "deploy any helm charts to the internal cluster (the VPN needs to be connected for this to work)"
+}
+
+variable "deploy_public_kubernetes_cluster" {
+  type    = bool
+  default = true
+}
+
+variable "deploy_internal_kubernetes_cluster" {
+  type    = bool
+  default = false
+}
+
+variable "update_kube_config" {
+  type        = bool
+  default     = true
+  description = "Update your kubeconfig file with access details of the new kubernetes clusters"
 }

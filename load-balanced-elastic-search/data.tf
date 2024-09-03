@@ -13,15 +13,15 @@ data "openstack_images_image_v2" "elastic" {
 }
 
 data "openstack_compute_flavor_v2" "management_instance" {
-  name = "c1.small"
+  name = "m1.small"
 }
 
 data "openstack_compute_flavor_v2" "elastic" {
-  name = "c1.xlarge"
+  name = "m1.xlarge"
 }
 
 data "openstack_compute_flavor_v2" "elastic_primary" {
-  name = "c1.xxlarge"
+  name = "t1.xxxlarge"
 }
 
 data "local_file" "load_balancer_tls_cert" {

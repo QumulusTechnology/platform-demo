@@ -56,7 +56,7 @@ variable "vpn_security_group_id" {
 
 variable "elastic_image" {
   type    = string
-  default = "Ubuntu-20.04-Focal"
+  default = "Ubuntu-22.04-Jammy"
 }
 
 variable "primary_server_roles" {
@@ -71,7 +71,7 @@ variable "secondary_server_roles" {
 
 variable "ece_version" {
   type    = string
-  default = "3.6.2"
+  default = "3.7.2"
 }
 
 variable "ece_user" {

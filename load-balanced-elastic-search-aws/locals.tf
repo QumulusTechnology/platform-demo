@@ -1,8 +1,11 @@
 locals {
   availability_zones = [for z in var.zones : "${var.aws_region}${z}"]
   run_ansible        = var.run_ansible ? "su ${var.ece_user} /home/${var.ece_user}/install-ece.sh" : "echo 'Skipping ECE installation'"
+  public_ssh_key_filename  = basename(var.public_ssh_key_path)
+  private_ssh_key_filename = basename(var.private_ssh_key_path)
   install_ece_script = templatefile("${path.module}/templates/install-ece.sh.tftpl", {
     run_ansible  = var.run_ansible,
+    private_ssh_key_filename = local.private_ssh_key_filename,
     s3_bucket_id = aws_s3_bucket.ece_install.id
     s3_object_1  = aws_s3_object.management_instance_files_1.id
     s3_object_2  = aws_s3_object.management_instance_files_2.id
@@ -20,6 +23,7 @@ locals {
     letsencrypt_email = var.letsencrypt_email
     aws_region        = var.aws_region
     load_balancer_arn = aws_lb.elastic_alb.arn
+    private_ssh_key_filename = local.private_ssh_key_filename
   })
 
   ece_servers = { for i, s in aws_instance.ece_servers :
